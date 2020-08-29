@@ -3,34 +3,19 @@ package main
 import (
 	"fmt"
 	"time"
+
+	"github.com/bartke/tributary"
 )
-
-type Event interface {
-	Payload() []byte
-}
-
-type Source interface {
-	Out() chan Event
-}
-
-type Network interface {
-	In(chan Event)
-	Out() chan Event
-}
-
-type Sink interface {
-	In(chan Event)
-}
 
 type ticker struct {
 	ticker *time.Ticker
-	out    chan Event
+	out    chan tributary.Event
 }
 
 func NewTicker() *ticker {
 	return &ticker{
 		ticker: time.NewTicker(1 * time.Second),
-		out:    make(chan Event),
+		out:    make(chan tributary.Event),
 	}
 }
 
@@ -43,7 +28,7 @@ func TimeEvent(t time.Time) *timeevent {
 }
 
 func (t timeevent) Payload() []byte {
-	return []byte(t.t.String())
+	return []byte(t.t.Format(time.RFC3339))
 }
 
 func (t *ticker) Run() {
@@ -52,21 +37,21 @@ func (t *ticker) Run() {
 	}
 }
 
-func (t *ticker) Out() chan Event {
+func (t *ticker) Out() chan tributary.Event {
 	return t.out
 }
 
 type printer struct {
-	in chan Event
+	in chan tributary.Event
 }
 
 func NewPrinter() *printer {
 	return &printer{
-		in: make(chan Event),
+		in: make(chan tributary.Event),
 	}
 }
 
-func (p *printer) In(ch chan Event) {
+func (p *printer) In(ch chan tributary.Event) {
 	p.in = ch
 }
 
@@ -77,12 +62,48 @@ func (p *printer) Run() {
 	}
 }
 
+type filter struct {
+	in  chan tributary.Event
+	out chan tributary.Event
+}
+
+func NewFilter() *filter {
+	return &filter{
+		out: make(chan tributary.Event),
+	}
+}
+
+func (f *filter) In(ch chan tributary.Event) {
+	f.in = ch
+}
+
+func (f *filter) Out() chan tributary.Event {
+	return f.out
+}
+
+func (f *filter) Run() {
+	for {
+		e := <-f.in
+		t, err := time.Parse(time.RFC3339, string(e.Payload()))
+		if err != nil || t.Second()%2 == 0 {
+			//fmt.Println("filtered")
+			continue
+		}
+		f.out <- e
+	}
+}
+
 func main() {
 	source := NewTicker()
-	go source.Run()
+
+	pipeline := NewFilter()
+	pipeline.In(source.Out())
 
 	sink := NewPrinter()
-	sink.In(source.Out())
+	sink.In(pipeline.Out())
+
+	go source.Run()
+	go pipeline.Run()
 	go sink.Run()
 
 	// blocking wait
