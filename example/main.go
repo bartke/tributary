@@ -37,12 +37,12 @@ func (t *ticker) Run() {
 	}
 }
 
-func (t *ticker) Out() chan tributary.Event {
+func (t *ticker) Out() <-chan tributary.Event {
 	return t.out
 }
 
 type printer struct {
-	in chan tributary.Event
+	in <-chan tributary.Event
 }
 
 func NewPrinter() *printer {
@@ -51,7 +51,7 @@ func NewPrinter() *printer {
 	}
 }
 
-func (p *printer) In(ch chan tributary.Event) {
+func (p *printer) In(ch <-chan tributary.Event) {
 	p.in = ch
 }
 
@@ -63,7 +63,7 @@ func (p *printer) Run() {
 }
 
 type filter struct {
-	in  chan tributary.Event
+	in  <-chan tributary.Event
 	out chan tributary.Event
 }
 
@@ -73,20 +73,19 @@ func NewFilter() *filter {
 	}
 }
 
-func (f *filter) In(ch chan tributary.Event) {
+func (f *filter) In(ch <-chan tributary.Event) {
 	f.in = ch
 }
 
-func (f *filter) Out() chan tributary.Event {
+func (f *filter) Out() <-chan tributary.Event {
 	return f.out
 }
 
 func (f *filter) Run() {
 	for {
 		e := <-f.in
-		t, err := time.Parse(time.RFC3339, string(e.Payload()))
-		if err != nil || t.Second()%2 == 0 {
-			//fmt.Println("filtered")
+		t, _ := time.Parse(time.RFC3339, string(e.Payload()))
+		if t.Second()%2 == 0 {
 			continue
 		}
 		f.out <- e
@@ -94,16 +93,19 @@ func (f *filter) Run() {
 }
 
 func main() {
-	source := NewTicker()
+	var source tributary.Source
+	var pipeline tributary.Network
+	var sink tributary.Sink
 
-	pipeline := NewFilter()
-	pipeline.In(source.Out())
-
-	sink := NewPrinter()
-	sink.In(pipeline.Out())
-
+	source = NewTicker()
 	go source.Run()
+
+	pipeline = NewFilter()
+	pipeline.In(source.Out())
 	go pipeline.Run()
+
+	sink = NewPrinter()
+	sink.In(pipeline.Out())
 	go sink.Run()
 
 	// blocking wait

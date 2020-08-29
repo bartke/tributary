@@ -5,14 +5,17 @@ type Event interface {
 }
 
 type Source interface {
-	Out() chan Event
+	Out() <-chan Event
+	Run()
 }
 
 type Network interface {
-	In(chan Event)
-	Out() chan Event
+	In(<-chan Event)
+	Out() <-chan Event
+	Run()
 }
 
 type Sink interface {
-	In(chan Event)
+	In(<-chan Event)
+	Run()
 }
