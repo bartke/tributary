@@ -1,6 +1,9 @@
 package tributary
 
+import "context"
+
 type Event interface {
+	Context() context.Context
 	Payload() []byte
 }
 

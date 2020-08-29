@@ -1,6 +1,9 @@
 ## Tributary
 
 Simple Go event stream processor.
+- flow based, isolates concurrently running network nodes
+- network nodes have in and out ports
+- source nodes have out, sink nodes in ports
 
 Event
 - payload flowing through the system
