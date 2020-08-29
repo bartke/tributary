@@ -2,9 +2,16 @@
 
 Simple Go event stream processor.
 
+Event
+- payload flowing through the system
+
 Sources
 - Google PubSub
 - RabbitMQ
+- Ticker
+
+Filter
+- Matcher
 
 Pipeline
 - Matcher
@@ -16,7 +23,7 @@ Pipeline
 
 Sinks:
 - Slack
-- HTTP Callback
+- Callback
 - Google PubSub
 - RabbitMQ
 
