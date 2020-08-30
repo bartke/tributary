@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"context"
@@ -96,24 +96,4 @@ func (f *filter) Run() {
 		}
 		f.out <- e
 	}
-}
-
-func main() {
-	var source tributary.Source
-	var pipeline tributary.Network
-	var sink tributary.Sink
-
-	source = NewTicker()
-	go source.Run()
-
-	pipeline = NewFilter()
-	pipeline.In(source.Out())
-	go pipeline.Run()
-
-	sink = NewPrinter()
-	sink.In(pipeline.Out())
-	go sink.Run()
-
-	// blocking wait
-	select {}
 }
