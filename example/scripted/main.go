@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/bartke/tributary/example/common"
-	"github.com/bartke/tributary/example/scripted/module"
+	"github.com/bartke/tributary/module"
 	lua "github.com/yuin/gopher-lua"
 )
 
