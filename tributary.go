@@ -12,13 +12,16 @@ type Source interface {
 	Run()
 }
 
-type Network interface {
-	In(<-chan Event)
-	Out() <-chan Event
-	Run()
-}
-
 type Sink interface {
 	In(<-chan Event)
 	Run()
+}
+
+type Pipeline interface {
+	Source
+	Sink
+}
+
+func Connect(nodeA Source, nodeB Sink) {
+	nodeB.In(nodeA.Out())
 }
