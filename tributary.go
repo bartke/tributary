@@ -7,14 +7,18 @@ type Event interface {
 	Payload() []byte
 }
 
-type Source interface {
-	Out() <-chan Event
+type Node interface {
 	Run()
 }
 
+type Source interface {
+	Node
+	Out() <-chan Event
+}
+
 type Sink interface {
+	Node
 	In(<-chan Event)
-	Run()
 }
 
 type Pipeline interface {
