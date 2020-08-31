@@ -3,22 +3,30 @@ package main
 import (
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/example/common"
+	"github.com/bartke/tributary/pipeline/forwarder"
 )
 
 func main() {
 	var source tributary.Source
-	var pipeline tributary.Pipeline
+	var pipeline, fwd tributary.Pipeline
 	var sink tributary.Sink
 
 	source = common.NewTicker()
-	go source.Run()
-
 	pipeline = common.NewFilter()
-	tributary.Link(source, pipeline)
-	go pipeline.Run()
-
+	fwd = forwarder.New()
 	sink = common.NewPrinter()
-	tributary.Link(pipeline, sink)
+
+	//tributary.Link(source, pipeline)
+	//tributary.Link(pipeline, sink)
+
+	// from source to pipeline and forwarder
+	tributary.Fanout(source, pipeline, fwd)
+	// to sink from pipeline and forwarder
+	tributary.Fanin(sink, pipeline, fwd)
+
+	go source.Run()
+	go pipeline.Run()
+	go fwd.Run()
 	go sink.Run()
 
 	// blocking wait

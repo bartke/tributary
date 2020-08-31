@@ -11,9 +11,7 @@ type printer struct {
 }
 
 func NewPrinter() *printer {
-	return &printer{
-		in: make(chan tributary.Event),
-	}
+	return &printer{}
 }
 
 func (p *printer) In(ch <-chan tributary.Event) {
@@ -21,8 +19,7 @@ func (p *printer) In(ch <-chan tributary.Event) {
 }
 
 func (p *printer) Run() {
-	for {
-		e := <-p.in
+	for e := range p.in {
 		fmt.Println(string(e.Payload()))
 	}
 }

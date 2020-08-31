@@ -26,8 +26,7 @@ func (f *filter) Out() <-chan tributary.Event {
 }
 
 func (f *filter) Run() {
-	for {
-		e := <-f.in
+	for e := range f.in {
 		t, _ := time.Parse(time.RFC3339, string(e.Payload()))
 		if t.Second()%2 == 0 {
 			continue
