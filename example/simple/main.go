@@ -14,11 +14,11 @@ func main() {
 	go source.Run()
 
 	pipeline = common.NewFilter()
-	tributary.Connect(source, pipeline)
+	tributary.Link(source, pipeline)
 	go pipeline.Run()
 
 	sink = common.NewPrinter()
-	tributary.Connect(pipeline, sink)
+	tributary.Link(pipeline, sink)
 	go sink.Run()
 
 	// blocking wait

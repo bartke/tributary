@@ -26,6 +26,6 @@ type Pipeline interface {
 	Sink
 }
 
-func Connect(nodeA Source, nodeB Sink) {
+func Link(nodeA Source, nodeB Sink) {
 	nodeB.In(nodeA.Out())
 }

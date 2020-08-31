@@ -9,7 +9,7 @@ import (
 
 // register tributary functions
 
-func (m *module) connect(l *lua.LState) int {
+func (m *module) link(l *lua.LState) int {
 	a, err := m.GetSource(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -21,14 +21,14 @@ func (m *module) connect(l *lua.LState) int {
 		return 0
 	}
 
-	tributary.Connect(a, b)
+	tributary.Link(a, b)
 	l.Push(luaConvertValue(l, true))
 	return 1
 }
 
 func (m *module) Loader(l *lua.LState) int {
 	exports := map[string]lua.LGFunction{
-		"connect": m.connect,
+		"link": m.link,
 	}
 	mod := l.SetFuncs(l.NewTable(), exports)
 

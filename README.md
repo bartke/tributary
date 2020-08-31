@@ -2,8 +2,35 @@
 
 Simple Go event stream processor.
 - flow based, isolates concurrently running network nodes
-- network nodes have in and out ports
-- source nodes have out, sink nodes in ports
+- network nodes have in and out ports that can be connected
+
+As per [example/scripted](example/scripted/network.lua), we can set up networks at runtime with
+lua scripts, such as
+
+```lua
+local tb = require("tributary")
+
+tb.link("ticker_1s", "filter_even")
+tb.link("filter_even", "printer")
+```
+
+If we register the network nodes on the lua module:
+
+```go
+import "github.com/bartke/tributary"
+```
+
+```go
+	m := tributary.New()
+
+	// register sources, pipelines, sinks
+	tickerNode := common.NewTicker()
+	m.RegisterSource("ticker_1s", tickerNode)
+	filterNode := common.NewFilter()
+	m.RegisterPipeline("filter_even", filterNode)
+	printerNode := common.NewPrinter()
+	m.RegisterSink("printer", printerNode)
+```
 
 Event
 - payload flowing through the system
