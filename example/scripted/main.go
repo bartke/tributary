@@ -16,17 +16,13 @@ func main() {
 	defer ctxCancelFn()
 
 	m := module.New()
-	// register sources, pipelines, sinks
-	tickerNode := common.NewTicker()
-	m.RegisterSource("ticker_1s", tickerNode)
-	filterNode := common.NewFilter()
-	m.RegisterPipeline("filter_even", filterNode)
-	printerNode := common.NewPrinter()
-	m.RegisterSink("printer", printerNode)
+	// register network nodes
+	m.RegisterSource("ticker_1s", common.NewTicker())
+	m.RegisterPipeline("filter_even", common.NewFilter())
+	m.RegisterSink("printer", common.NewPrinter())
 
 	// register for lua 'require("tributary")
 	vm.PreloadModule("tributary", m.Loader)
-
 	network, err := compileLua("./example/scripted/network.lua")
 	if err != nil {
 		log.Fatal(err)
@@ -35,10 +31,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	go tickerNode.Run()
-	go filterNode.Run()
-	go printerNode.Run()
 
 	// blocking wait
 	select {}
