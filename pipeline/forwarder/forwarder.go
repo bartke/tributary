@@ -1,6 +1,8 @@
 package forwarder
 
-import "github.com/bartke/tributary"
+import (
+	"github.com/bartke/tributary"
+)
 
 type forwarder struct {
 	in  <-chan tributary.Event

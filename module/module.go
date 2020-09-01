@@ -59,3 +59,33 @@ func (m *module) GetSink(a string) (tributary.Sink, error) {
 	}
 	return nil, ErrNodeNotFound
 }
+
+func (m *module) GetNode(a string) (tributary.Node, bool) {
+	source, ok := m.sources[a]
+	if ok {
+		return source, true
+	}
+	sink, ok := m.sinks[a]
+	if ok {
+		return sink, true
+	}
+	node, ok := m.pipelines[a]
+	if ok {
+		return node, true
+	}
+	return nil, false
+}
+
+func (m *module) Run(a string) error {
+	node, ok := m.GetNode(a)
+	if ok {
+		go node.Run()
+		return nil
+	}
+	return ErrNodeNotFound
+}
+
+func (m *module) NodeExists(a string) bool {
+	_, ok := m.GetNode(a)
+	return ok
+}

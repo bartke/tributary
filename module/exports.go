@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/pipeline/forwarder"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -26,9 +27,86 @@ func (m *module) link(l *lua.LState) int {
 	return 1
 }
 
+func (m *module) fanout(l *lua.LState) int {
+	src, err := m.GetSource(l.CheckString(1))
+	if err != nil {
+		l.ArgError(1, "expects string")
+		return 0
+	}
+	var dests []tributary.Sink
+	for i := 2; i <= l.GetTop(); i++ {
+		dest, err := m.GetSink(l.CheckString(i))
+		if err != nil {
+			l.ArgError(i, "expects string")
+			return 0
+		}
+		dests = append(dests, dest)
+	}
+
+	tributary.Fanout(src, dests...)
+	l.Push(luaConvertValue(l, true))
+	return 1
+}
+
+func (m *module) fanin(l *lua.LState) int {
+	dest, err := m.GetSink(l.CheckString(1))
+	if err != nil {
+		l.ArgError(1, "expects string")
+		return 0
+	}
+	var srcs []tributary.Source
+	for i := 2; i <= l.GetTop(); i++ {
+		src, err := m.GetSource(l.CheckString(i))
+		if err != nil {
+			l.ArgError(i, "expects string")
+			return 0
+		}
+		srcs = append(srcs, src)
+	}
+
+	tributary.Fanin(dest, srcs...)
+	l.Push(luaConvertValue(l, true))
+	return 1
+}
+
+func (m *module) createForwarder(l *lua.LState) int {
+	name := l.CheckString(1)
+	fwd := forwarder.New()
+	m.RegisterPipeline(name, fwd)
+	l.Push(luaConvertValue(l, true))
+	return 1
+}
+
+func (m *module) run(l *lua.LState) int {
+	name := l.CheckString(1)
+	err := m.Run(name)
+	if err != nil {
+		l.ArgError(1, "not found")
+		return 0
+	}
+	l.Push(luaConvertValue(l, true))
+	return 1
+}
+
+func (m *module) nodeExists(l *lua.LState) int {
+	name := l.CheckString(1)
+	ok := m.NodeExists(name)
+	if !ok {
+		l.Push(luaConvertValue(l, false))
+		return 1
+	}
+	l.Push(luaConvertValue(l, true))
+	return 1
+}
+
 func (m *module) Loader(l *lua.LState) int {
 	exports := map[string]lua.LGFunction{
-		"link": m.link,
+		"node_exists":      m.nodeExists,
+		"run":              m.run,
+		"link":             m.link,
+		"create_forwarder": m.createForwarder,
+		"fanout":           m.fanout,
+		"fanin":            m.fanin,
 	}
 	mod := l.SetFuncs(l.NewTable(), exports)
 
