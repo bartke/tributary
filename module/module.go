@@ -17,3 +17,10 @@ func New(n *network.Network) *Module {
 	m.initExports()
 	return m
 }
+
+func (m *Module) Run(script string) (*VM, error) {
+	vm := NewVM()
+	vm.LoadModule("tributary", m.Loader)
+	err := vm.Run(script)
+	return vm, err
+}
