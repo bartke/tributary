@@ -16,6 +16,8 @@ func main() {
 
 	m := module.New(n)
 	m.Export("parse_json", parseJson(n))
+	m.Export("create_window", parseJson(n))
+	m.Export("query_window", parseJson(n))
 
 	vm, err := m.Run("./example/advanced/network.lua")
 	if err != nil {

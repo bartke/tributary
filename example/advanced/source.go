@@ -16,21 +16,22 @@ const (
 )
 
 type selection struct {
-	ID   string
-	Odds string
+	GameID   string `json:"game_id"`
+	MarketID string `json:"market_id"`
+	Odds     string `json:"odds"`
 }
 
 type stake struct {
-	Value    string
-	Currency string
+	Value    string `json:"value"`
+	Currency string `json:"currency"`
 }
 
 type bet struct {
-	RequestUUID  string
-	CustomerUUID string
-	Stake        stake
-	Selections   []selection
-	Odds         string
+	RequestUUID  string      `json:"request_id"`
+	CustomerUUID string      `json:"customer_uuid"`
+	Stake        stake       `json:"stake"`
+	Selections   []selection `json:"selections"`
+	Odds         string      `json:"odds"`
 }
 
 // one low frequency high staking customer and one high frequency low stake one
@@ -39,6 +40,13 @@ func customer() string {
 		return a
 	}
 	return b
+}
+
+func gameid() string {
+	if rand.Intn(100) < 50 {
+		return "123456"
+	}
+	return "654321"
 }
 
 func customerStake(customer string) string {
@@ -54,7 +62,7 @@ func sampleBet() *bet {
 		RequestUUID:  uuid.Must(uuid.NewRandom()).String(),
 		CustomerUUID: c,
 		Stake:        stake{customerStake(c), "USD"},
-		Selections:   []selection{{"123456/moneyline/home", "1.23"}},
+		Selections:   []selection{{gameid(), "moneyline/home", "1.23"}},
 		Odds:         "1.23",
 	}
 }
