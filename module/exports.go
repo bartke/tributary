@@ -10,7 +10,7 @@ import (
 
 // register tributary functions
 
-func (m *module) link(l *lua.LState) int {
+func (m *Module) link(l *lua.LState) int {
 	a, err := m.GetSource(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -23,11 +23,11 @@ func (m *module) link(l *lua.LState) int {
 	}
 
 	tributary.Link(a, b)
-	l.Push(luaConvertValue(l, true))
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) fanout(l *lua.LState) int {
+func (m *Module) fanout(l *lua.LState) int {
 	src, err := m.GetSource(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -44,11 +44,11 @@ func (m *module) fanout(l *lua.LState) int {
 	}
 
 	tributary.Fanout(src, dests...)
-	l.Push(luaConvertValue(l, true))
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) fanin(l *lua.LState) int {
+func (m *Module) fanin(l *lua.LState) int {
 	dest, err := m.GetSink(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -65,42 +65,42 @@ func (m *module) fanin(l *lua.LState) int {
 	}
 
 	tributary.Fanin(dest, srcs...)
-	l.Push(luaConvertValue(l, true))
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) createForwarder(l *lua.LState) int {
+func (m *Module) createForwarder(l *lua.LState) int {
 	name := l.CheckString(1)
 	fwd := forwarder.New()
-	m.RegisterPipeline(name, fwd)
-	l.Push(luaConvertValue(l, true))
+	m.RegisterNode(name, fwd)
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) run(l *lua.LState) int {
+func (m *Module) run(l *lua.LState) int {
 	name := l.CheckString(1)
 	err := m.Run(name)
 	if err != nil {
 		l.ArgError(1, "not found")
 		return 0
 	}
-	l.Push(luaConvertValue(l, true))
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) nodeExists(l *lua.LState) int {
+func (m *Module) nodeExists(l *lua.LState) int {
 	name := l.CheckString(1)
 	ok := m.NodeExists(name)
 	if !ok {
-		l.Push(luaConvertValue(l, false))
+		l.Push(LuaConvertValue(l, false))
 		return 1
 	}
-	l.Push(luaConvertValue(l, true))
+	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
-func (m *module) Loader(l *lua.LState) int {
-	exports := map[string]lua.LGFunction{
+func (m *Module) initExports() {
+	m.exports = map[string]lua.LGFunction{
 		"node_exists":      m.nodeExists,
 		"run":              m.run,
 		"link":             m.link,
@@ -108,13 +108,20 @@ func (m *module) Loader(l *lua.LState) int {
 		"fanout":           m.fanout,
 		"fanin":            m.fanin,
 	}
-	mod := l.SetFuncs(l.NewTable(), exports)
+}
+
+func (m *Module) AddModuleExport(name string, fn lua.LGFunction) {
+	m.exports[name] = fn
+}
+
+func (m *Module) Loader(l *lua.LState) int {
+	mod := l.SetFuncs(l.NewTable(), m.exports)
 
 	l.Push(mod)
 	return 1
 }
 
-func luaConvertValue(l *lua.LState, val interface{}) lua.LValue {
+func LuaConvertValue(l *lua.LState, val interface{}) lua.LValue {
 	if val == nil {
 		return lua.LNil
 	}
@@ -149,7 +156,7 @@ func luaConvertValue(l *lua.LState, val interface{}) lua.LValue {
 	case []interface{}:
 		tbl := l.CreateTable(len(val.([]interface{})), 0)
 		for k, v := range v {
-			tbl.RawSetInt(k+1, luaConvertValue(l, v))
+			tbl.RawSetInt(k+1, LuaConvertValue(l, v))
 		}
 		return tbl
 	case time.Time:

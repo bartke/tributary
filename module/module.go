@@ -4,39 +4,45 @@ import (
 	"errors"
 
 	"github.com/bartke/tributary"
+	lua "github.com/yuin/gopher-lua"
 )
 
 var (
 	ErrNodeNotFound = errors.New("node doesn't exist")
 )
 
-type module struct {
+type Module struct {
 	sources   map[string]tributary.Source
 	pipelines map[string]tributary.Pipeline
 	sinks     map[string]tributary.Sink
+
+	exports map[string]lua.LGFunction
 }
 
-func New() *module {
-	return &module{
+func New() *Module {
+	m := &Module{
 		sources:   make(map[string]tributary.Source),
 		pipelines: make(map[string]tributary.Pipeline),
 		sinks:     make(map[string]tributary.Sink),
 	}
+	m.initExports()
+	return m
 }
 
-func (m *module) RegisterSource(name string, node tributary.Source) {
-	m.sources[name] = node
+func (m *Module) RegisterNode(name string, node tributary.Node) {
+	source, isSource := node.(tributary.Source)
+	pipeline, isPipeline := node.(tributary.Pipeline)
+	sink, isSink := node.(tributary.Sink)
+	if isPipeline {
+		m.pipelines[name] = pipeline
+	} else if isSource {
+		m.sources[name] = source
+	} else if isSink {
+		m.sinks[name] = sink
+	}
 }
 
-func (m *module) RegisterPipeline(name string, node tributary.Pipeline) {
-	m.pipelines[name] = node
-}
-
-func (m *module) RegisterSink(name string, node tributary.Sink) {
-	m.sinks[name] = node
-}
-
-func (m *module) GetSource(a string) (tributary.Source, error) {
+func (m *Module) GetSource(a string) (tributary.Source, error) {
 	source, ok := m.sources[a]
 	if ok {
 		return source, nil
@@ -48,7 +54,7 @@ func (m *module) GetSource(a string) (tributary.Source, error) {
 	return nil, ErrNodeNotFound
 }
 
-func (m *module) GetSink(a string) (tributary.Sink, error) {
+func (m *Module) GetSink(a string) (tributary.Sink, error) {
 	sink, ok := m.sinks[a]
 	if ok {
 		return sink, nil
@@ -60,7 +66,7 @@ func (m *module) GetSink(a string) (tributary.Sink, error) {
 	return nil, ErrNodeNotFound
 }
 
-func (m *module) GetNode(a string) (tributary.Node, bool) {
+func (m *Module) GetNode(a string) (tributary.Node, bool) {
 	source, ok := m.sources[a]
 	if ok {
 		return source, true
@@ -76,7 +82,7 @@ func (m *module) GetNode(a string) (tributary.Node, bool) {
 	return nil, false
 }
 
-func (m *module) Run(a string) error {
+func (m *Module) Run(a string) error {
 	node, ok := m.GetNode(a)
 	if ok {
 		go node.Run()
@@ -85,7 +91,7 @@ func (m *module) Run(a string) error {
 	return ErrNodeNotFound
 }
 
-func (m *module) NodeExists(a string) bool {
+func (m *Module) NodeExists(a string) bool {
 	_, ok := m.GetNode(a)
 	return ok
 }
