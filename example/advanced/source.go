@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/google/uuid"
+	"github.com/infobloxopen/protoc-gen-gorm/types"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -22,25 +25,6 @@ func init() {
 	randB = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-type selection struct {
-	GameID   string `json:"game_id"`
-	MarketID string `json:"market_id"`
-	Odds     string `json:"odds"`
-}
-
-type stake struct {
-	Value    string `json:"value"`
-	Currency string `json:"currency"`
-}
-
-type bet struct {
-	RequestUUID  string      `json:"request_id"`
-	CustomerUUID string      `json:"customer_uuid"`
-	Stake        stake       `json:"stake"`
-	Selections   []selection `json:"selections"`
-	Odds         string      `json:"odds"`
-}
-
 // one low frequency high staking customer and one high frequency low stake one
 func customer() string {
 	if randA.Intn(100) < 5 {
@@ -49,11 +33,11 @@ func customer() string {
 	return b
 }
 
-func gameid() string {
+func gameid() uint64 {
 	if randB.Intn(100) < 50 {
-		return "123456"
+		return 123456
 	}
-	return "654321"
+	return 654321
 }
 
 func customerStake(customer string) string {
@@ -63,13 +47,14 @@ func customerStake(customer string) string {
 	return "1.00"
 }
 
-func sampleBet() *bet {
+func sampleBet() *event.Bet {
 	c := customer()
-	return &bet{
-		RequestUUID:  uuid.Must(uuid.NewRandom()).String(),
-		CustomerUUID: c,
-		Stake:        stake{customerStake(c), "USD"},
-		Selections:   []selection{{gameid(), "moneyline/home", "1.23"}},
+	return &event.Bet{
+		Id:           &types.UUIDValue{uuid.Must(uuid.NewRandom()).String()},
+		CreateTime:   timestamppb.New(time.Now().UTC()),
+		CustomerUuid: c,
+		Stake:        &event.Bet_Stake{Value: customerStake(c), Currency: "USD", ExchangeRate: "1.0"},
+		Selections:   []*event.Selection{{GameId: gameid(), Market: "moneyline/home", Odds: "1.23"}},
 		Odds:         "1.23",
 	}
 }
