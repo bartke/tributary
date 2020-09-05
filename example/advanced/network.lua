@@ -2,7 +2,7 @@ local tb = require("tributary")
 
 -- setup network
 -- source --> parser --> bets_window --> window_query --> printer
-tb.parse_json("parser", "customer_uuid", "sport")
+tb.parse("parser")
 tb.link("streaming_ingest", "parser")
 tb.create_window("bets_window", "sqlite", "memory", "json_parser")
 tb.link("parser", "bets_window")

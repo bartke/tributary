@@ -15,6 +15,13 @@ const (
 	b = "66440a98-a92a-4ce0-a5aa-d851a6f288d9"
 )
 
+var randA, randB *rand.Rand
+
+func init() {
+	randA = rand.New(rand.NewSource(time.Now().UnixNano()))
+	randB = rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
 type selection struct {
 	GameID   string `json:"game_id"`
 	MarketID string `json:"market_id"`
@@ -36,14 +43,14 @@ type bet struct {
 
 // one low frequency high staking customer and one high frequency low stake one
 func customer() string {
-	if rand.Intn(100) < 10 {
+	if randA.Intn(100) < 5 {
 		return a
 	}
 	return b
 }
 
 func gameid() string {
-	if rand.Intn(100) < 50 {
+	if randB.Intn(100) < 50 {
 		return "123456"
 	}
 	return "654321"
@@ -91,7 +98,7 @@ type stream struct {
 
 func NewStream() *stream {
 	return &stream{
-		ticker: time.NewTicker(1 * time.Second),
+		ticker: time.NewTicker(50 * time.Millisecond),
 		out:    make(chan tributary.Event),
 	}
 }
