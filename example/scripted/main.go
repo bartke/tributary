@@ -17,9 +17,9 @@ func main() {
 
 	m := module.New()
 	// register network nodes
-	m.RegisterNode("ticker_1s", common.NewTicker())
-	m.RegisterNode("filter_even", common.NewFilter())
-	m.RegisterNode("printer", common.NewPrinter())
+	m.AddNode("ticker_1s", common.NewTicker())
+	m.AddNode("filter_even", common.NewFilter())
+	m.AddNode("printer", common.NewPrinter())
 
 	// register for lua 'require("tributary")
 	vm.PreloadModule("tributary", m.Loader)

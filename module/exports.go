@@ -72,7 +72,7 @@ func (m *Module) fanin(l *lua.LState) int {
 func (m *Module) createForwarder(l *lua.LState) int {
 	name := l.CheckString(1)
 	fwd := forwarder.New()
-	m.RegisterNode(name, fwd)
+	m.AddNode(name, fwd)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
@@ -110,7 +110,7 @@ func (m *Module) initExports() {
 	}
 }
 
-func (m *Module) AddModuleExport(name string, fn lua.LGFunction) {
+func (m *Module) Export(name string, fn lua.LGFunction) {
 	m.exports[name] = fn
 }
 

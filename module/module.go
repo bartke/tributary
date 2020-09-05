@@ -29,7 +29,7 @@ func New() *Module {
 	return m
 }
 
-func (m *Module) RegisterNode(name string, node tributary.Node) {
+func (m *Module) AddNode(name string, node tributary.Node) {
 	source, isSource := node.(tributary.Source)
 	pipeline, isPipeline := node.(tributary.Pipeline)
 	sink, isSink := node.(tributary.Sink)
