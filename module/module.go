@@ -1,16 +1,16 @@
 package module
 
 import (
+	"github.com/bartke/tributary/network"
 	lua "github.com/yuin/gopher-lua"
 )
 
 type Module struct {
-	network *Network
-
+	network *network.Network
 	exports map[string]lua.LGFunction
 }
 
-func NewModule(n *Network) *Module {
+func New(n *network.Network) *Module {
 	m := &Module{
 		network: n,
 	}

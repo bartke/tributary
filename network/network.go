@@ -1,4 +1,4 @@
-package module
+package network
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ type Network struct {
 	sinks     map[string]tributary.Sink
 }
 
-func NewNetwork() *Network {
+func New() *Network {
 	n := &Network{
 		sources:   make(map[string]tributary.Source),
 		pipelines: make(map[string]tributary.Pipeline),
