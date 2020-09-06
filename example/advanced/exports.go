@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/pipeline/forwarder"
@@ -25,7 +26,7 @@ func parseMessage(n *network.Network) func(l *lua.LState) int {
 func createWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
-		ci := injector.New(db.createInjector)
+		ci := injector.New(db.createInjector(&event.Bet{}))
 		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1

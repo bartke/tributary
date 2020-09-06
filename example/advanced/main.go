@@ -14,7 +14,7 @@ func main() {
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", common.NewPrinter())
 
-	db, err := NewDB()
+	db, err := NewWindow()
 	if err != nil {
 		log.Fatal(err)
 	}

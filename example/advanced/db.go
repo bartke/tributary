@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"reflect"
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/example/advanced/event"
@@ -15,7 +16,7 @@ type Window struct {
 	db *gorm.DB
 }
 
-func NewDB() (*Window, error) {
+func NewWindow() (*Window, error) {
 	//inmemory := sqlite.Open("file::memory:?cache=shared")
 	//db, err := gorm.Open(inmemory, &gorm.Config{})
 	inmemory := sqlite.Open("file:test.db")
@@ -35,19 +36,22 @@ func NewDB() (*Window, error) {
 	return window, nil
 }
 
-func (w *Window) createInjector(msg tributary.Event) (tributary.Event, error) {
-	bet := &event.Bet{}
-	err := json.Unmarshal(msg.Payload(), &bet)
-	if err != nil {
-		log.Println("inject error", err)
-		return nil, err
+func (w *Window) createInjector(v interface{}) func(msg tributary.Event) (tributary.Event, error) {
+	return func(msg tributary.Event) (tributary.Event, error) {
+		// clone zero value from v
+		p := reflect.New(reflect.TypeOf(v).Elem()).Interface()
+		err := json.Unmarshal(msg.Payload(), &p)
+		if err != nil {
+			log.Println("inject error", err)
+			return nil, err
+		}
+		result := w.db.Create(p)
+		if result.Error != nil {
+			log.Println("create error", result.Error)
+			return nil, result.Error
+		}
+		return msg, nil
 	}
-	result := w.db.Create(bet)
-	if result.Error != nil {
-		log.Println("create error", result.Error)
-		return nil, err
-	}
-	return msg, result.Error
 }
 
 func (w *Window) queryWindow(query string) func(msg tributary.Event) ([]tributary.Event, error) {
@@ -59,7 +63,7 @@ func (w *Window) queryWindow(query string) func(msg tributary.Event) ([]tributar
 			return nil, result.Error
 		}
 		if len(records) == 0 {
-			return nil, errors.New("no return")
+			return nil, errors.New("no rows in result set")
 		}
 		var out []tributary.Event
 		for i := range records {
