@@ -8,6 +8,12 @@ Simple Windowing using SQL
 - alert too slack or telegram on query return
 - clear window after alert successfully sent from next network node
 
+Types
+- `[]byte` json/octet-stream payloads
+- Type registry?
+- multi output
+- filter reported, uniqueness
+
 As per [example/scripted](example/scripted/network.lua), we can set up networks at runtime with
 lua scripts, such as
 

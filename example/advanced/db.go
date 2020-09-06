@@ -50,18 +50,22 @@ func (w *Window) createInjector(msg tributary.Event) (tributary.Event, error) {
 	return msg, result.Error
 }
 
-func (w *Window) queryWindow(query string) func(msg tributary.Event) (tributary.Event, error) {
-	return func(msg tributary.Event) (tributary.Event, error) {
-		ress := []map[string]interface{}{}
-		result := w.db.Raw(query).Scan(&ress)
+func (w *Window) queryWindow(query string) func(msg tributary.Event) ([]tributary.Event, error) {
+	return func(msg tributary.Event) ([]tributary.Event, error) {
+		records := []map[string]interface{}{}
+		result := w.db.Raw(query).Scan(&records)
 		if result.Error != nil {
 			log.Println("query error", result.Error)
 			return nil, result.Error
 		}
-		if len(ress) == 0 {
+		if len(records) == 0 {
 			return nil, errors.New("no return")
 		}
-		out, _ := json.Marshal(ress)
-		return Msg(out, msg.Context()), result.Error
+		var out []tributary.Event
+		for i := range records {
+			oi, _ := json.Marshal(records[i])
+			out = append(out, Msg(oi, msg.Context()))
+		}
+		return out, result.Error
 	}
 }
