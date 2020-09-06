@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
@@ -23,10 +24,10 @@ func parseMessage(n *network.Network) func(l *lua.LState) int {
 
 // create table if not exist, cache if exists
 // insert tick into table
-func createWindow(n *network.Network, db *Window) func(l *lua.LState) int {
+func createWindow(n *network.Network, w tributary.Windower) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
-		ci := injector.New(db.createInjector(&event.Bet{}))
+		ci := injector.New(w.Create(&event.Bet{}))
 		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
@@ -35,11 +36,11 @@ func createWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 
 // run query on table
 // emit if not empty result set
-func queryWindow(n *network.Network, db *Window) func(l *lua.LState) int {
+func queryWindow(n *network.Network, w tributary.Windower) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
 		query := l.CheckString(2)
-		ci := multiinjector.New(db.queryWindow(query))
+		ci := multiinjector.New(w.Query(query))
 		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1

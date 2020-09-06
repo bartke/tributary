@@ -67,7 +67,7 @@ type msg struct {
 	ctx     context.Context
 }
 
-func Msg(p []byte, ctx context.Context) *msg {
+func Msg(ctx context.Context, p []byte) tributary.Event {
 	return &msg{payload: p, ctx: ctx}
 }
 
@@ -95,7 +95,7 @@ func (s *stream) Run() {
 	for {
 		<-s.ticker.C
 		m, _ := json.Marshal(sampleBet())
-		s.out <- Msg(m, context.Background())
+		s.out <- Msg(context.Background(), m)
 	}
 }
 

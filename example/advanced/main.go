@@ -3,9 +3,13 @@ package main
 import (
 	"log"
 
+	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/bartke/tributary/example/common"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
+	gormwindow "github.com/bartke/tributary/window/gorm"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -14,7 +18,9 @@ func main() {
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", common.NewPrinter())
 
-	db, err := NewWindow()
+	//inmemory := sqlite.Open("file::memory:?cache=shared")
+	file := sqlite.Open("file:test.db")
+	db, err := gormwindow.New(file, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}
