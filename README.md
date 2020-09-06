@@ -4,6 +4,10 @@ Simple Go event stream processor.
 - flow based, isolates concurrently running network nodes
 - network nodes have in and out ports that can be connected
 
+Simple Windowing using SQL
+- alert too slack or telegram on query return
+- clear window after alert successfully sent from next network node
+
 As per [example/scripted](example/scripted/network.lua), we can set up networks at runtime with
 lua scripts, such as
 
