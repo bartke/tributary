@@ -3,32 +3,23 @@ syntax = "proto3";
 package event;
 option go_package = "github.com/bartke/tributary/example/advanced/event";
 
-import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";
-import "github.com/infobloxopen/protoc-gen-gorm/types/types.proto";
-import "google/protobuf/timestamp.proto";
-
 message Bet {
-  option (gorm.opts).ormable = true;
-
-  gorm.types.UUIDValue id = 1;
-  google.protobuf.Timestamp create_time = 2;
-
+  string uuid = 1;
+  int64 create_time = 2;
   string customer_uuid = 3;
 
-  message Stake {
-    string value = 1;
-    string currency = 2;
-    string exchange_rate = 3;
-  }
-  Stake stake = 4;
+  double stake = 4;
+  string currency = 5;
+  double exchange_rate = 6;
 
-  repeated Selection selections = 5;
-  string odds = 6;
+  repeated Selection selections = 7;
+  double odds = 8;
 }
 
 message Selection {
-  option (gorm.opts).ormable = true;
-  uint64 game_id = 1;
-  string market = 2;
-  string odds = 3;
+  uint32 id = 1;
+  string bet_uuid = 2;
+  uint64 game_id = 3;
+  string market = 4;
+  double odds = 5;
 }

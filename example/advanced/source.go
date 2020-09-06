@@ -9,8 +9,6 @@ import (
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/google/uuid"
-	"github.com/infobloxopen/protoc-gen-gorm/types"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -40,22 +38,27 @@ func gameid() uint64 {
 	return 654321
 }
 
-func customerStake(customer string) string {
+func customerStake(customer string) float64 {
 	if customer == a {
-		return "100.00"
+		return 100.00
 	}
-	return "1.00"
+	return 5.00
 }
 
 func sampleBet() *event.Bet {
 	c := customer()
+	id := uuid.Must(uuid.NewRandom()).String()
 	return &event.Bet{
-		Id:           &types.UUIDValue{uuid.Must(uuid.NewRandom()).String()},
-		CreateTime:   timestamppb.New(time.Now().UTC()),
+		Uuid: id,
+		//CreateTime:   &event.Timestamp{Timestamp: timestamppb.New(time.Now().UTC())},
+		//CreateTime:   &event.Timestamp{Timestamp: ptypes.TimestampNow()},
+		CreateTime:   time.Now().UnixNano(),
 		CustomerUuid: c,
-		Stake:        &event.Bet_Stake{Value: customerStake(c), Currency: "USD", ExchangeRate: "1.0"},
-		Selections:   []*event.Selection{{GameId: gameid(), Market: "moneyline/home", Odds: "1.23"}},
-		Odds:         "1.23",
+		Stake:        customerStake(c),
+		Currency:     "USD",
+		ExchangeRate: 1.0,
+		Selections:   []*event.Selection{{BetUuid: id, GameId: gameid(), Market: "moneyline/home", Odds: 1.23}},
+		Odds:         1.23,
 	}
 }
 

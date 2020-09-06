@@ -14,15 +14,15 @@ func main() {
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", common.NewPrinter())
 
-	err := NewDB()
+	db, err := NewDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	m := module.New(n)
 	m.Export("parse", parseMessage(n))
-	m.Export("create_window", createWindow(n))
-	m.Export("query_window", queryWindow(n))
+	m.Export("create_window", createWindow(n, db))
+	m.Export("query_window", queryWindow(n, db))
 
 	vm, err := m.Run("./example/advanced/network.lua")
 	if err != nil {

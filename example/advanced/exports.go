@@ -4,6 +4,7 @@ import (
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/pipeline/forwarder"
+	"github.com/bartke/tributary/pipeline/injector"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -20,11 +21,11 @@ func parseMessage(n *network.Network) func(l *lua.LState) int {
 
 // create table if not exist, cache if exists
 // insert tick into table
-func createWindow(n *network.Network) func(l *lua.LState) int {
+func createWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
-		fwd := forwarder.New()
-		n.AddNode(name, fwd)
+		ci := injector.New(db.createInjector)
+		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
 	}
@@ -32,7 +33,7 @@ func createWindow(n *network.Network) func(l *lua.LState) int {
 
 // run query on table
 // emit if not empty result set
-func queryWindow(n *network.Network) func(l *lua.LState) int {
+func queryWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
 		fwd := forwarder.New()
