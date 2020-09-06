@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/bartke/tributary"
@@ -43,8 +44,25 @@ func (w *Window) createInjector(msg tributary.Event) (tributary.Event, error) {
 	}
 	result := w.db.Create(bet)
 	if result.Error != nil {
-		log.Println("create error", err)
+		log.Println("create error", result.Error)
 		return nil, err
 	}
 	return msg, result.Error
+}
+
+func (w *Window) queryWindow(query string) func(msg tributary.Event) (tributary.Event, error) {
+	return func(msg tributary.Event) (tributary.Event, error) {
+		type res struct {
+			Sum          float64
+			CustomerUuid string
+		}
+		ress := []map[string]interface{}{}
+		result := w.db.Raw(query).Scan(&ress)
+		if result.Error != nil {
+			log.Println("create error", result.Error)
+			return nil, result.Error
+		}
+		fmt.Println(ress)
+		return msg, result.Error
+	}
 }

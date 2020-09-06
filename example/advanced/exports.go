@@ -36,8 +36,9 @@ func createWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 func queryWindow(n *network.Network, db *Window) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
-		fwd := forwarder.New()
-		n.AddNode(name, fwd)
+		query := l.CheckString(2)
+		ci := injector.New(db.queryWindow(query))
+		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
 	}
