@@ -7,7 +7,24 @@ tb.link("streaming_ingest", "parser")
 tb.create_window("bets_window")
 tb.link("parser", "bets_window")
 -- select customer_id from bets where sport='soccer
-tb.query_window("window_query", "select sum(stake*exchange_rate) as sum, customer_uuid from bets group by customer_uuid")
+local query = [[
+    select
+	sum(stake*exchange_rate*(b.odds -1)) as liability,
+	customer_uuid,
+	game_id
+from
+	bets b
+join selections s on
+	b.uuid = s.bet_uuid
+where
+	datetime(b.create_time / 1000000000, 'unixepoch') >= datetime('now', '-1 minute')
+group by
+	customer_uuid,
+	game_id
+having
+	liability > 100
+]]
+tb.query_window("window_query", query)
 tb.link("bets_window", "window_query")
 tb.link("window_query", "printer")
 
