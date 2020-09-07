@@ -1,11 +1,9 @@
 local tb = require("tributary")
 
 -- setup network
--- source --> parser --> bets_window --> window_query --> printer
-tb.parse("parser")
-tb.link("streaming_ingest", "parser")
+-- source --> bets_window --> window_query --> printer
 tb.create_window("bets_window")
-tb.link("parser", "bets_window")
+tb.link("streaming_ingest", "bets_window")
 -- select customer_id from bets where sport='soccer
 local query = [[
     select
@@ -30,7 +28,6 @@ tb.link("window_query", "printer")
 
 -- run all network ndoes
 tb.run("streaming_ingest")
-tb.run("parser")
 tb.run("bets_window")
 tb.run("window_query")
 tb.run("printer")

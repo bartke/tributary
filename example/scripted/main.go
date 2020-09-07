@@ -17,7 +17,7 @@ func main() {
 
 	// create the tributary module and register the tributary module exports
 	m := module.New(n)
-	vm, err := m.Run("./example/scripted/network.lua")
+	vm, err := m.Run("./network.lua")
 	if err != nil {
 		log.Fatal(err)
 	}
