@@ -14,6 +14,8 @@ Types
 - multi output
 - filter reported, uniqueness
 
+TODO: example with one windower DB, multiple networks.
+
 As per [example/scripted](example/scripted/network.lua), we can set up networks at runtime with
 lua scripts, such as
 

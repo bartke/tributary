@@ -1,4 +1,4 @@
-package gormwindow
+package gormwindower
 
 import (
 	"database/sql"

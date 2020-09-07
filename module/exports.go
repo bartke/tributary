@@ -79,7 +79,7 @@ func (m *Module) run(l *lua.LState) int {
 	name := l.CheckString(1)
 	err := m.network.RunNode(name)
 	if err != nil {
-		l.ArgError(1, "not found")
+		l.ArgError(1, "node not found")
 		return 0
 	}
 	l.Push(LuaConvertValue(l, true))
