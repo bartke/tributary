@@ -7,16 +7,10 @@ import (
 type Event interface {
 	Context() context.Context
 	Payload() []byte
+	Error() error
 }
 
-type EventConstructor func(ctx context.Context, msg []byte) Event
-type MultiInjector func(Event) ([]Event, error)
-type Injector func(Event) (Event, error)
-
-type Windower interface {
-	Create(v interface{}) Injector
-	Query(q string) MultiInjector
-}
+type EventConstructor func(ctx context.Context, msg []byte, err error) Event
 
 type Node interface {
 	Run()

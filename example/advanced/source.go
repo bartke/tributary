@@ -65,10 +65,11 @@ func sampleBet() *event.Bet {
 type msg struct {
 	payload []byte
 	ctx     context.Context
+	err     error
 }
 
-func Msg(ctx context.Context, p []byte) tributary.Event {
-	return &msg{payload: p, ctx: ctx}
+func Msg(ctx context.Context, p []byte, err error) tributary.Event {
+	return &msg{payload: p, ctx: ctx, err: err}
 }
 
 func (m msg) Payload() []byte {
@@ -77,6 +78,10 @@ func (m msg) Payload() []byte {
 
 func (m msg) Context() context.Context {
 	return m.ctx
+}
+
+func (m msg) Error() error {
+	return m.err
 }
 
 type stream struct {
@@ -94,8 +99,8 @@ func NewStream() *stream {
 func (s *stream) Run() {
 	for {
 		<-s.ticker.C
-		m, _ := json.Marshal(sampleBet())
-		s.out <- Msg(context.Background(), m)
+		m, err := json.Marshal(sampleBet())
+		s.out <- Msg(context.Background(), m, err)
 	}
 }
 

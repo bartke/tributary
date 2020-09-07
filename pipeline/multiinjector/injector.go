@@ -4,13 +4,15 @@ import (
 	"github.com/bartke/tributary"
 )
 
+type MultiInjector func(tributary.Event) ([]tributary.Event, error)
+
 type multiinjector struct {
 	in     <-chan tributary.Event
 	out    chan tributary.Event
-	inject tributary.MultiInjector
+	inject MultiInjector
 }
 
-func New(fn tributary.MultiInjector) *multiinjector {
+func New(fn MultiInjector) *multiinjector {
 	return &multiinjector{
 		out:    make(chan tributary.Event),
 		inject: fn,

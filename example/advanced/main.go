@@ -18,9 +18,9 @@ func main() {
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", common.NewPrinter())
 
-	//inmemory := sqlite.Open("file::memory:?cache=shared")
-	file := sqlite.Open("file:test.db")
-	db, err := gormwindow.New(file, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
+	inmemory := sqlite.Open("file::memory:?cache=shared")
+	//file := sqlite.Open("file:test.db")
+	db, err := gormwindow.New(inmemory, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -8,6 +8,7 @@ import (
 type timeevent struct {
 	t   time.Time
 	ctx context.Context
+	err error
 }
 
 func TimeEvent(t time.Time) *timeevent {
@@ -20,4 +21,8 @@ func (t timeevent) Payload() []byte {
 
 func (t timeevent) Context() context.Context {
 	return t.ctx
+}
+
+func (t timeevent) Error() error {
+	return t.err
 }

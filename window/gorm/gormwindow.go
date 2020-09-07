@@ -7,6 +7,8 @@ import (
 	"reflect"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/pipeline/injector"
+	"github.com/bartke/tributary/pipeline/multiinjector"
 	"gorm.io/gorm"
 )
 
@@ -33,7 +35,7 @@ func New(dbhandle gorm.Dialector, cfg *gorm.Config, builder tributary.EventConst
 	return window, nil
 }
 
-func (w *Window) Create(v interface{}) tributary.Injector {
+func (w *Window) Create(v interface{}) injector.Injector {
 	return func(msg tributary.Event) (tributary.Event, error) {
 		// clone zero value from v
 		p := reflect.New(reflect.TypeOf(v).Elem()).Interface()
@@ -51,7 +53,7 @@ func (w *Window) Create(v interface{}) tributary.Injector {
 	}
 }
 
-func (w *Window) Query(query string) tributary.MultiInjector {
+func (w *Window) Query(query string) multiinjector.MultiInjector {
 	return func(msg tributary.Event) ([]tributary.Event, error) {
 		records := []map[string]interface{}{}
 		result := w.db.Raw(query).Scan(&records)
@@ -65,7 +67,7 @@ func (w *Window) Query(query string) tributary.MultiInjector {
 		var out []tributary.Event
 		for i := range records {
 			oi, _ := json.Marshal(records[i])
-			out = append(out, w.builder(msg.Context(), oi))
+			out = append(out, w.builder(msg.Context(), oi, nil))
 		}
 		return out, result.Error
 	}
