@@ -7,7 +7,7 @@ import (
 	"github.com/bartke/tributary/example/common"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
-	"github.com/bartke/tributary/window/gormwindower"
+	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ import (
 func main() {
 	inmemory := sqlite.Open("file::memory:?cache=shared")
 	//file := sqlite.Open("file:test.db")
-	db, err := gormwindower.New(inmemory, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
+	db, err := gormwindow.New(inmemory, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}

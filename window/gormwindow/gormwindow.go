@@ -1,4 +1,4 @@
-package gormwindower
+package gormwindow
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/pipeline/injector"
-	"github.com/bartke/tributary/pipeline/multiinjector"
+	"github.com/bartke/tributary/pipeline/interceptor"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +35,7 @@ func New(dbhandle gorm.Dialector, cfg *gorm.Config, builder tributary.EventConst
 	return window, nil
 }
 
-func (w *Window) Create(v interface{}) injector.Injector {
+func (w *Window) Create(v interface{}) interceptor.Fn {
 	return func(msg tributary.Event) (tributary.Event, error) {
 		// clone zero value from v
 		p := reflect.New(reflect.TypeOf(v).Elem()).Interface()
@@ -53,7 +53,7 @@ func (w *Window) Create(v interface{}) injector.Injector {
 	}
 }
 
-func (w *Window) Query(query string) multiinjector.MultiInjector {
+func (w *Window) Query(query string) injector.Fn {
 	return func(msg tributary.Event) ([]tributary.Event, error) {
 		records := []map[string]interface{}{}
 		result := w.db.Raw(query).Scan(&records)

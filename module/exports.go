@@ -8,7 +8,7 @@ import (
 
 // register tributary functions
 
-func (m *Module) link(l *lua.LState) int {
+func (m *Engine) link(l *lua.LState) int {
 	a, err := m.network.GetSource(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -25,7 +25,7 @@ func (m *Module) link(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) fanout(l *lua.LState) int {
+func (m *Engine) fanout(l *lua.LState) int {
 	src, err := m.network.GetSource(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -46,7 +46,7 @@ func (m *Module) fanout(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) fanin(l *lua.LState) int {
+func (m *Engine) fanin(l *lua.LState) int {
 	dest, err := m.network.GetSink(l.CheckString(1))
 	if err != nil {
 		l.ArgError(1, "expects string")
@@ -67,7 +67,7 @@ func (m *Module) fanin(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) createForwarder(l *lua.LState) int {
+func (m *Engine) createForwarder(l *lua.LState) int {
 	name := l.CheckString(1)
 	fwd := forwarder.New()
 	m.network.AddNode(name, fwd)
@@ -75,7 +75,7 @@ func (m *Module) createForwarder(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) run(l *lua.LState) int {
+func (m *Engine) run(l *lua.LState) int {
 	name := l.CheckString(1)
 	err := m.network.RunNode(name)
 	if err != nil {
@@ -86,7 +86,7 @@ func (m *Module) run(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) nodeExists(l *lua.LState) int {
+func (m *Engine) nodeExists(l *lua.LState) int {
 	name := l.CheckString(1)
 	ok := m.network.NodeExists(name)
 	if !ok {
@@ -97,7 +97,7 @@ func (m *Module) nodeExists(l *lua.LState) int {
 	return 1
 }
 
-func (m *Module) initExports() {
+func (m *Engine) initExports() {
 	m.exports = map[string]lua.LGFunction{
 		"node_exists":      m.nodeExists,
 		"run":              m.run,
@@ -108,11 +108,11 @@ func (m *Module) initExports() {
 	}
 }
 
-func (m *Module) Export(name string, fn lua.LGFunction) {
+func (m *Engine) Export(name string, fn lua.LGFunction) {
 	m.exports[name] = fn
 }
 
-func (m *Module) Loader(l *lua.LState) int {
+func (m *Engine) Loader(l *lua.LState) int {
 	mod := l.SetFuncs(l.NewTable(), m.exports)
 
 	l.Push(mod)

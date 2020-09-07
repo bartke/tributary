@@ -5,7 +5,7 @@ import (
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/pipeline/injector"
-	"github.com/bartke/tributary/pipeline/multiinjector"
+	"github.com/bartke/tributary/pipeline/interceptor"
 	"github.com/bartke/tributary/window"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -15,7 +15,7 @@ import (
 func createWindow(n *network.Network, w window.Windower) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
-		ci := injector.New(w.Create(&event.Bet{}))
+		ci := interceptor.New(w.Create(&event.Bet{}))
 		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
@@ -28,7 +28,7 @@ func queryWindow(n *network.Network, w window.Windower) func(l *lua.LState) int 
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
 		query := l.CheckString(2)
-		ci := multiinjector.New(w.Query(query))
+		ci := injector.New(w.Query(query))
 		n.AddNode(name, ci)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
