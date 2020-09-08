@@ -33,13 +33,3 @@ tb.link("dedupe_liability", "printer")
 tb.create_ticker("ticker", 10000) -- 10 seconds
 tb.create_cleaner("cleaner", "dedupe_liability", 10)
 tb.link("ticker", "cleaner")
-
--- run all network ndoes
-tb.run("streaming_ingest")
-tb.run("bets_window")
-tb.run("window_query")
-tb.run("dedupe_liability")
-tb.run("printer")
-
-tb.run("ticker")
-tb.run("cleaner")

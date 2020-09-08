@@ -44,6 +44,7 @@ func main() {
 	}
 	defer vm.Close()
 
+	n.Run()
 	log.Println("running")
 
 	// blocking wait

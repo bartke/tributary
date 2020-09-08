@@ -87,6 +87,18 @@ func (n *Network) RunNode(a string) error {
 	return ErrNodeNotFound
 }
 
+func (n *Network) Run() {
+	for _, node := range n.sinks {
+		go node.Run()
+	}
+	for _, node := range n.pipelines {
+		go node.Run()
+	}
+	for _, node := range n.sources {
+		go node.Run()
+	}
+}
+
 func (n *Network) NodeExists(a string) bool {
 	_, ok := n.GetNode(a)
 	return ok
