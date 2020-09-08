@@ -34,9 +34,7 @@ func main() {
 	m.Export("create_window", createWindow(n, db))
 	m.Export("query_window", queryWindow(n, db))
 	m.Export("query_window", queryWindow(n, db))
-	m.Export("create_filter", createDeduper(n, deduper))
-	m.Export("create_cleaner", createCleaner(n, deduper))
-	m.Export("create_ticker", createTicker(n))
+	m.Export("create_filter", createFilter(n, deduper))
 
 	vm, err := m.Run("./network.lua")
 	if err != nil {

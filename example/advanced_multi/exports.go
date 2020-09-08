@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
@@ -38,39 +39,24 @@ func queryWindow(n *network.Network, w window.Windower) func(l *lua.LState) int 
 	}
 }
 
-func createDeduper(n *network.Network, f *gormdedupe.Filter) func(l *lua.LState) int {
+func createFilter(n *network.Network, f *gormdedupe.Filter) func(l *lua.LState) int {
 	return func(l *lua.LState) int {
 		name := l.CheckString(1)
+		seconds := l.CheckInt(2)
 		deduper, err := f.Create(name)
 		if err != nil {
 			l.ArgError(1, "node not found")
 			return 0
 		}
+		// add main deduper function
 		ci := interceptor.New(deduper)
 		n.AddNode(name, ci)
-		l.Push(module.LuaConvertValue(l, true))
-		return 1
-	}
-}
-
-func createTicker(n *network.Network) func(l *lua.LState) int {
-	return func(l *lua.LState) int {
-		name := l.CheckString(1)
-		ms := l.CheckInt(2)
-		node := ticker.New(ms)
-		n.AddNode(name, node)
-		l.Push(module.LuaConvertValue(l, true))
-		return 1
-	}
-}
-
-func createCleaner(n *network.Network, f *gormdedupe.Filter) func(l *lua.LState) int {
-	return func(l *lua.LState) int {
-		name := l.CheckString(1)
-		table := l.CheckString(2)
-		s := l.CheckInt(3)
-		node := handler.New(f.Clean(table, s))
-		n.AddNode(name, node)
+		// create cleanup routine for deduper
+		src := ticker.New(seconds * 1000)
+		n.AddNode(name+"_ticker", src)
+		sink := handler.New(f.Clean(name, seconds))
+		n.AddNode(name+"_cleaner", sink)
+		tributary.Link(src, sink)
 		l.Push(module.LuaConvertValue(l, true))
 		return 1
 	}

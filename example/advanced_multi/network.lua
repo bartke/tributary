@@ -26,10 +26,6 @@ having
 tb.query_window("window_query", query)
 tb.link("bets_window", "window_query")
 
-tb.create_filter("dedupe_liability")
+tb.create_filter("dedupe_liability", 60)
 tb.link("window_query", "dedupe_liability")
 tb.link("dedupe_liability", "printer")
-
-tb.create_ticker("ticker", 10000) -- 10 seconds
-tb.create_cleaner("cleaner", "dedupe_liability", 10)
-tb.link("ticker", "cleaner")
