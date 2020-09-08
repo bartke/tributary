@@ -1,11 +1,11 @@
 package gormdedupe
 
 import (
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/pipeline/interceptor"
 	"github.com/bartke/tributary/sink/handler"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -21,11 +21,6 @@ type Filter struct {
 	db *gorm.DB
 }
 
-type Deduper struct {
-	db   *gorm.DB
-	name string
-}
-
 func New(dbhandle gorm.Dialector, cfg *gorm.Config) (*Filter, error) {
 	cfg.Logger = logger.Default.LogMode(logger.Silent)
 	db, err := gorm.Open(dbhandle, cfg)
@@ -35,24 +30,18 @@ func New(dbhandle gorm.Dialector, cfg *gorm.Config) (*Filter, error) {
 	return &Filter{db: db}, nil
 }
 
-func (f *Filter) Create(name string) (*Deduper, error) {
-	d := &Deduper{
-		db:   f.db,
-		name: name,
-	}
+func (f *Filter) Create(name string) (interceptor.Fn, error) {
 	err := f.db.Table(name).AutoMigrate(&Record{})
 	if err != nil {
-		return d, err
+		return nil, err
 	}
-	return d, nil
-}
-
-func (d *Deduper) Dedupe(msg tributary.Event) (tributary.Event, error) {
-	result := d.db.Table(d.name).Create(&Record{Payload: msg.Payload()})
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return msg, nil
+	return func(msg tributary.Event) (tributary.Event, error) {
+		result := f.db.Table(name).Create(&Record{Payload: msg.Payload()})
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return msg, nil
+	}, nil
 }
 
 func (f *Filter) Clean(name string, s int) handler.Fn {
@@ -61,8 +50,8 @@ func (f *Filter) Clean(name string, s int) handler.Fn {
 		if result.Error != nil {
 			log.Println(result.Error)
 		}
-		var tick time.Time
-		tick.UnmarshalBinary(e.Payload())
-		fmt.Println(result.RowsAffected, "purged", tick, "after", time.Since(tick))
+		//var tick time.Time
+		//tick.UnmarshalBinary(e.Payload())
+		//fmt.Println(result.RowsAffected, "purged", tick, "after", time.Since(tick))
 	}
 }
