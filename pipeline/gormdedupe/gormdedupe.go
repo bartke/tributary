@@ -1,9 +1,12 @@
 package gormdedupe
 
 import (
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/sink/handler"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -50,4 +53,16 @@ func (d *Deduper) Dedupe(msg tributary.Event) (tributary.Event, error) {
 		return nil, result.Error
 	}
 	return msg, nil
+}
+
+func (f *Filter) Clean(name string, s int) handler.Fn {
+	return func(e tributary.Event) {
+		result := f.db.Table(name).Delete(Record{}, "create_time < ?", time.Now().Add(-1*time.Duration(s)*time.Second))
+		if result.Error != nil {
+			log.Println(result.Error)
+		}
+		var tick time.Time
+		tick.UnmarshalBinary(e.Payload())
+		fmt.Println(result.RowsAffected, "purged", tick, "after", time.Since(tick))
+	}
 }
