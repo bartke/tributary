@@ -1,4 +1,4 @@
-package gormdeduper
+package gormdedupe
 
 import (
 	"time"
@@ -10,36 +10,42 @@ import (
 
 type Record struct {
 	Id         int       `gorm:"PrimaryKey;autoincrement:true"`
-	Payload    []byte    `gorm:"index:91efe54f-03f9-4033-97a6-4bc98051d1eb_idx,unique"`
+	Payload    []byte    `gorm:"unique"`
 	CreateTime time.Time `gorm:"DEFAULT:current_timestamp"`
 }
 
-func (Record) TableName() string {
-	return "91efe54f-03f9-4033-97a6-4bc98051d1eb"
-}
-
-type Deduper struct {
+type Filter struct {
 	db *gorm.DB
 }
 
-func New(dbhandle gorm.Dialector, cfg *gorm.Config) (*Deduper, error) {
+type Deduper struct {
+	db   *gorm.DB
+	name string
+}
+
+func New(dbhandle gorm.Dialector, cfg *gorm.Config) (*Filter, error) {
 	cfg.Logger = logger.Default.LogMode(logger.Silent)
 	db, err := gorm.Open(dbhandle, cfg)
 	if err != nil {
 		return nil, err
 	}
-	deduper := &Deduper{
-		db: db,
+	return &Filter{db: db}, nil
+}
+
+func (f *Filter) Create(name string) (*Deduper, error) {
+	d := &Deduper{
+		db:   f.db,
+		name: name,
 	}
-	err = db.AutoMigrate(&Record{})
+	err := f.db.Table(name).AutoMigrate(&Record{})
 	if err != nil {
-		return deduper, err
+		return d, err
 	}
-	return deduper, nil
+	return d, nil
 }
 
 func (d *Deduper) Dedupe(msg tributary.Event) (tributary.Event, error) {
-	result := d.db.Create(&Record{Payload: msg.Payload()})
+	result := d.db.Table(d.name).Create(&Record{Payload: msg.Payload()})
 	if result.Error != nil {
 		return nil, result.Error
 	}

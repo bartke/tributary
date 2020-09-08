@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package event;
+option go_package = "github.com/bartke/tributary/example/advanced/event";
+
+message Bet {
+  string uuid = 1;
+  int64 create_time = 2;
+  string customer_uuid = 3;
+
+  double stake = 4;
+  string currency = 5;
+  double exchange_rate = 6;
+
+  repeated Selection selections = 7;
+  double odds = 8;
+}
+
+message Selection {
+  uint32 id = 1;
+  string bet_uuid = 2;
+  uint64 game_id = 3;
+  string market = 4;
+  double odds = 5;
+}
