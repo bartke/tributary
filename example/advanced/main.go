@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/event/standardevent"
 	"github.com/bartke/tributary/example/advanced/event"
-	"github.com/bartke/tributary/example/common"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
+	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,7 +17,7 @@ import (
 
 func main() {
 	inmemory := sqlite.Open("file::memory:?cache=shared")
-	db, err := gormwindow.New(inmemory, &gorm.Config{}, Msg, &event.Bet{}, &event.Selection{})
+	db, err := gormwindow.New(inmemory, &gorm.Config{}, standardevent.New, &event.Bet{}, &event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +25,7 @@ func main() {
 	// create network and register nodes
 	n := network.New()
 	n.AddNode("streaming_ingest", NewStream())
-	n.AddNode("printer", common.NewPrinter())
+	n.AddNode("printer", handler.New(out))
 
 	m := module.New(n)
 	m.Export("create_window", createWindow(n, db))
@@ -38,4 +41,8 @@ func main() {
 
 	// blocking wait
 	select {}
+}
+
+func out(e tributary.Event) {
+	fmt.Println(string(e.Payload()))
 }

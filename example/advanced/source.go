@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bartke/tributary"
+	"github.com/bartke/tributary/event/standardevent"
 	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/google/uuid"
 )
@@ -62,28 +63,6 @@ func sampleBet() *event.Bet {
 	}
 }
 
-type msg struct {
-	payload []byte
-	ctx     context.Context
-	err     error
-}
-
-func Msg(ctx context.Context, p []byte, err error) tributary.Event {
-	return &msg{payload: p, ctx: ctx, err: err}
-}
-
-func (m msg) Payload() []byte {
-	return m.payload
-}
-
-func (m msg) Context() context.Context {
-	return m.ctx
-}
-
-func (m msg) Error() error {
-	return m.err
-}
-
 type stream struct {
 	ticker *time.Ticker
 	out    chan tributary.Event
@@ -100,7 +79,7 @@ func (s *stream) Run() {
 	for {
 		<-s.ticker.C
 		m, err := json.Marshal(sampleBet())
-		s.out <- Msg(context.Background(), m, err)
+		s.out <- standardevent.New(context.Background(), m, err)
 	}
 }
 
