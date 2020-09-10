@@ -31,9 +31,7 @@ func main() {
 	n.AddNode("printer", common.NewPrinter())
 
 	m := module.New(n)
-	m.Export("create_window", createWindow(n, db))
-	m.Export("query_window", queryWindow(n, db))
-	m.Export("query_window", queryWindow(n, db))
+	m.AddWindowExports(db, &event.Bet{})
 	m.Export("create_filter", createFilter(n, deduper))
 
 	vm, err := m.Run("./network.lua")
