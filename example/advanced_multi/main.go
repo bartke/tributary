@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	deduper, err := gormdedupe.New(file, &gorm.Config{})
+	deduper, err := gormdedupe.New(file, &gorm.Config{}, Msg)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -18,16 +18,20 @@ type Record struct {
 }
 
 type Filter struct {
-	db *gorm.DB
+	db      *gorm.DB
+	builder tributary.EventConstructor
 }
 
-func New(dbhandle gorm.Dialector, cfg *gorm.Config) (*Filter, error) {
+func New(dbhandle gorm.Dialector, cfg *gorm.Config, builder tributary.EventConstructor) (*Filter, error) {
 	cfg.Logger = logger.Default.LogMode(logger.Silent)
 	db, err := gorm.Open(dbhandle, cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &Filter{db: db}, nil
+	return &Filter{
+		db:      db,
+		builder: builder,
+	}, nil
 }
 
 func (f *Filter) Create(name string) (interceptor.Fn, error) {
@@ -35,12 +39,12 @@ func (f *Filter) Create(name string) (interceptor.Fn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return func(msg tributary.Event) (tributary.Event, error) {
+	return func(msg tributary.Event) tributary.Event {
 		result := f.db.Table(name).Create(&Record{Payload: msg.Payload()})
 		if result.Error != nil {
-			return nil, result.Error
+			return f.builder(msg.Context(), msg.Payload(), result.Error)
 		}
-		return msg, nil
+		return f.builder(msg.Context(), msg.Payload(), nil)
 	}, nil
 }
 

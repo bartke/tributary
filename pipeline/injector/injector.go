@@ -4,7 +4,7 @@ import (
 	"github.com/bartke/tributary"
 )
 
-type Fn func(tributary.Event) ([]tributary.Event, error)
+type Fn func(tributary.Event) []tributary.Event
 
 type injector struct {
 	in  <-chan tributary.Event
@@ -29,12 +29,11 @@ func (i *injector) Out() <-chan tributary.Event {
 
 func (i *injector) Run() {
 	for e := range i.in {
-		inject, err := i.fn(e)
-		if err != nil {
-			continue
-		}
-		for j := range inject {
-			i.out <- inject[j]
+		for _, msg := range i.fn(e) {
+			if msg.Error() != nil {
+				continue
+			}
+			i.out <- msg
 		}
 	}
 }

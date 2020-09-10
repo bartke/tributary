@@ -4,7 +4,7 @@ import (
 	"github.com/bartke/tributary"
 )
 
-type Fn func(tributary.Event) (tributary.Event, error)
+type Fn func(tributary.Event) tributary.Event
 
 type interceptor struct {
 	in  <-chan tributary.Event
@@ -29,10 +29,10 @@ func (i *interceptor) Out() <-chan tributary.Event {
 
 func (i *interceptor) Run() {
 	for e := range i.in {
-		new, err := i.fn(e)
-		if err != nil {
+		msg := i.fn(e)
+		if msg.Error() != nil {
 			continue
 		}
-		i.out <- new
+		i.out <- msg
 	}
 }

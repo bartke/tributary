@@ -36,39 +36,39 @@ func New(dbhandle gorm.Dialector, cfg *gorm.Config, builder tributary.EventConst
 }
 
 func (w *Window) Create(v interface{}) interceptor.Fn {
-	return func(msg tributary.Event) (tributary.Event, error) {
+	return func(msg tributary.Event) tributary.Event {
 		// clone zero value from v
 		p := reflect.New(reflect.TypeOf(v).Elem()).Interface()
 		err := json.Unmarshal(msg.Payload(), &p)
 		if err != nil {
 			log.Println("inject error", err)
-			return nil, err
+			return w.builder(msg.Context(), msg.Payload(), err)
 		}
 		result := w.db.Create(p)
 		if result.Error != nil {
 			log.Println("create error", result.Error)
-			return nil, result.Error
+			return w.builder(msg.Context(), msg.Payload(), result.Error)
 		}
-		return msg, nil
+		return w.builder(msg.Context(), msg.Payload(), nil)
 	}
 }
 
 func (w *Window) Query(query string) injector.Fn {
-	return func(msg tributary.Event) ([]tributary.Event, error) {
+	return func(msg tributary.Event) []tributary.Event {
 		records := []map[string]interface{}{}
 		result := w.db.Raw(query).Scan(&records)
 		if result.Error != nil {
 			log.Println("query error", result.Error)
-			return nil, result.Error
+			return []tributary.Event{w.builder(msg.Context(), msg.Payload(), result.Error)}
 		}
 		if len(records) == 0 {
-			return nil, sql.ErrNoRows
+			return []tributary.Event{w.builder(msg.Context(), msg.Payload(), sql.ErrNoRows)}
 		}
 		var out []tributary.Event
 		for i := range records {
 			oi, _ := json.Marshal(records[i])
 			out = append(out, w.builder(msg.Context(), oi, nil))
 		}
-		return out, result.Error
+		return out
 	}
 }
