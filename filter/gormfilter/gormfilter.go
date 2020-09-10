@@ -1,4 +1,4 @@
-package gormdedupe
+package gormfilter
 
 import (
 	"log"

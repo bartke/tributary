@@ -7,7 +7,7 @@ import (
 	"github.com/bartke/tributary/example/common"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
-	"github.com/bartke/tributary/pipeline/gormdedupe"
+	"github.com/bartke/tributary/filter/gormfilter"
 	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	deduper, err := gormdedupe.New(file, &gorm.Config{}, Msg)
+	deduper, err := gormfilter.New(file, &gorm.Config{}, Msg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func main() {
 
 	m := module.New(n)
 	m.AddWindowExports(db, &event.Bet{})
-	m.Export("create_filter", createFilter(n, deduper))
+	m.AddFilterExport(deduper)
 
 	vm, err := m.Run("./network.lua")
 	if err != nil {

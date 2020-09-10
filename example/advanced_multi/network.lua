@@ -26,6 +26,6 @@ having
 tb.query_window("window_query", query)
 tb.link("bets_window", "window_query")
 
-tb.create_filter("dedupe_liability", 60)
+tb.create_filter("dedupe_liability", 10)
 tb.link("window_query", "dedupe_liability")
 tb.link("dedupe_liability", "printer")
