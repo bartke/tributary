@@ -18,8 +18,8 @@ func New() *Runtime {
 	return &Runtime{L, cancelFn}
 }
 
-func (r *Runtime) LoadModule(name string, fn func(l *lua.LState) int) {
-	r.L.PreloadModule(name, fn)
+func (r *Runtime) LoadModule(fn func(l *lua.LState) int) {
+	r.L.PreloadModule("tributary", fn)
 }
 
 func (r *Runtime) Compile(script string) (*lua.FunctionProto, error) {
