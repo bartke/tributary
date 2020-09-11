@@ -50,9 +50,7 @@ func sampleBet() *event.Bet {
 	c := customer()
 	id := uuid.Must(uuid.NewRandom()).String()
 	return &event.Bet{
-		Uuid: id,
-		//CreateTime:   &event.Timestamp{Timestamp: timestamppb.New(time.Now().UTC())},
-		//CreateTime:   &event.Timestamp{Timestamp: ptypes.TimestampNow()},
+		Uuid:         id,
 		CreateTime:   time.Now().UnixNano(),
 		CustomerUuid: c,
 		Stake:        customerStake(c),

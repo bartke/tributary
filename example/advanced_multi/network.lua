@@ -2,10 +2,11 @@ local tb = require("tributary")
 
 -- setup network
 -- source --> bets_window --> window_query --> printer
+--                        --> stream_split (script 2)
 tb.create_window("bets_window")
 tb.link("streaming_ingest", "bets_window")
 
--- select customer_id from bets where sport='soccer
+-- select aggregate customer liability if > 130
 local query = [[
     select
 	round(sum(stake*exchange_rate*(b.odds -1)), 2) as liability,
@@ -24,7 +25,10 @@ having
 	liability > 130
 ]]
 tb.query_window("window_query", query)
-tb.link("bets_window", "window_query")
+
+-- here we create a stream split to reutilize what was set up before
+tb.create_forwarder("stream_split")
+tb.fanout("bets_window", "window_query", "stream_split")
 
 tb.create_filter("dedupe_liability", 10)
 tb.link("window_query", "dedupe_liability")

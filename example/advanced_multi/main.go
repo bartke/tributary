@@ -10,6 +10,7 @@ import (
 	"github.com/bartke/tributary/filter/gormfilter"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
+	"github.com/bartke/tributary/runtime"
 	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/sqlite"
@@ -32,16 +33,27 @@ func main() {
 	n := network.New()
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", handler.New(out))
+	n.AddNode("printer2", handler.New(out))
 
 	m := module.New(n)
 	m.AddWindowExports(db, &event.Bet{})
 	m.AddFilterExport(deduper)
 
-	vm, err := m.Run("./network.lua")
+	r := runtime.New()
+	r.LoadModule(m.Loader)
+	err = r.Run("./network.lua")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer vm.Close()
+	// add another script, see if it compiles first
+	bc, err := r.Compile("./network2.lua")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := r.Execute(bc); err != nil {
+		log.Fatal(err)
+	}
+	defer r.Close()
 
 	n.Run()
 	log.Println("running")

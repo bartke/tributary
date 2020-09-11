@@ -6,6 +6,7 @@ import (
 	"github.com/bartke/tributary/example/common"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
+	"github.com/bartke/tributary/runtime"
 )
 
 func main() {
@@ -17,12 +18,17 @@ func main() {
 
 	// create the tributary module and register the tributary module exports
 	m := module.New(n)
-	vm, err := m.Run("./network.lua")
+	r := runtime.New()
+	r.LoadModule(m.Loader)
+	// Run will preload the tributary module and execute a script on the VM. We have to close it
+	// after we called Run().
+	err := r.Run("./network.lua")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer vm.Close()
+	defer r.Close()
 
+	n.Run()
 	log.Println("running")
 
 	// blocking wait

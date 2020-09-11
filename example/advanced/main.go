@@ -9,6 +9,7 @@ import (
 	"github.com/bartke/tributary/example/advanced/event"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
+	"github.com/bartke/tributary/runtime"
 	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/sqlite"
@@ -31,12 +32,15 @@ func main() {
 	m.Export("create_window", createWindow(n, db))
 	m.Export("query_window", queryWindow(n, db))
 
-	vm, err := m.Run("./network.lua")
+	r := runtime.New()
+	r.LoadModule(m.Loader)
+	err = r.Run("./network.lua")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer vm.Close()
+	defer r.Close()
 
+	n.Run()
 	log.Println("running")
 
 	// blocking wait
