@@ -8,6 +8,17 @@ import (
 
 // register tributary functions
 
+func (m *Engine) initExports() {
+	m.exports = map[string]lua.LGFunction{
+		"node_exists":      m.nodeExists,
+		"run":              m.run,
+		"link":             m.link,
+		"create_forwarder": m.createForwarder,
+		"fanout":           m.fanout,
+		"fanin":            m.fanin,
+	}
+}
+
 func (m *Engine) link(l *lua.LState) int {
 	a, err := m.network.GetSource(l.CheckString(1))
 	if err != nil {
@@ -94,27 +105,5 @@ func (m *Engine) nodeExists(l *lua.LState) int {
 		return 1
 	}
 	l.Push(LuaConvertValue(l, true))
-	return 1
-}
-
-func (m *Engine) initExports() {
-	m.exports = map[string]lua.LGFunction{
-		"node_exists":      m.nodeExists,
-		"run":              m.run,
-		"link":             m.link,
-		"create_forwarder": m.createForwarder,
-		"fanout":           m.fanout,
-		"fanin":            m.fanin,
-	}
-}
-
-func (m *Engine) Export(name string, fn lua.LGFunction) {
-	m.exports[name] = fn
-}
-
-func (m *Engine) Loader(l *lua.LState) int {
-	mod := l.SetFuncs(l.NewTable(), m.exports)
-
-	l.Push(mod)
 	return 1
 }
