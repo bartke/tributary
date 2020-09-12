@@ -1,8 +1,14 @@
 package module
 
 import (
+	"time"
+
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/pipeline/forwarder"
+	"github.com/bartke/tributary/pipeline/ratelimit"
+	"github.com/bartke/tributary/sink/handler"
+	"github.com/bartke/tributary/sink/handler/discard"
+	"github.com/bartke/tributary/sink/handler/tester"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -13,9 +19,12 @@ func (m *Engine) initExports() {
 		"node_exists":      m.nodeExists,
 		"run":              m.run,
 		"link":             m.link,
-		"create_forwarder": m.createForwarder,
 		"fanout":           m.fanout,
 		"fanin":            m.fanin,
+		"create_forwarder": m.createForwarder,
+		"create_ratelimit": m.createRatelimiter,
+		"create_discarder": m.createDiscarder,
+		"create_tester":    m.createTester,
 	}
 }
 
@@ -82,6 +91,37 @@ func (m *Engine) createForwarder(l *lua.LState) int {
 	name := l.CheckString(1)
 	fwd := forwarder.New()
 	m.network.AddNode(name, fwd)
+	l.Push(LuaConvertValue(l, true))
+	return 1
+}
+
+func (m *Engine) createRatelimiter(l *lua.LState) int {
+	name := l.CheckString(1)
+	atmost := l.CheckString(2)
+	d, err := time.ParseDuration(atmost)
+	if err != nil {
+		l.ArgError(2, err.Error())
+		return 0
+	}
+	limiter := ratelimit.New(d)
+	m.network.AddNode(name, limiter)
+	l.Push(LuaConvertValue(l, true))
+	return 1
+}
+
+func (m *Engine) createDiscarder(l *lua.LState) int {
+	name := l.CheckString(1)
+	sink := handler.New(discard.Handler)
+	m.network.AddNode(name, sink)
+	l.Push(LuaConvertValue(l, true))
+	return 1
+}
+
+func (m *Engine) createTester(l *lua.LState) int {
+	name := l.CheckString(1)
+	indicator := l.CheckString(2)
+	sink := handler.New(tester.New(indicator).Handler)
+	m.network.AddNode(name, sink)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
