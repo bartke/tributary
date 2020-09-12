@@ -4,10 +4,10 @@ local tb = require("tributary")
 -- source --> bets_window --> window_query --> printer
 tb.create_window("bets_window")
 tb.link("streaming_ingest", "bets_window")
--- select customer_id from bets where sport='soccer
+-- sqlite query
 local query = [[
     select
-	sum(stake*exchange_rate*(b.odds -1)) as liability,
+	round(sum(stake*exchange_rate*(b.odds -1)), 2) as liability,
 	customer_uuid,
 	game_id
 from

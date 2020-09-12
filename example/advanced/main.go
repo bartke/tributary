@@ -18,7 +18,9 @@ import (
 
 func main() {
 	inmemory := sqlite.Open("file::memory:?cache=shared")
-	db, err := gormwindow.New(inmemory, &gorm.Config{}, standardevent.New, &event.Bet{}, &event.Selection{})
+	db, err := gormwindow.New(inmemory, &gorm.Config{}, standardevent.New,
+		&event.Bet{},
+		&event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}
