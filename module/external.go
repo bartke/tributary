@@ -58,7 +58,7 @@ func (m *Engine) AddFilterExport(f filter.Filter) {
 		seconds := l.CheckInt(2)
 		filter, err := f.Create(name)
 		if err != nil {
-			l.ArgError(1, "node not found")
+			l.ArgError(1, err.Error())
 			return 0
 		}
 		// add main filter function

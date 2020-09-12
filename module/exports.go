@@ -22,12 +22,12 @@ func (m *Engine) initExports() {
 func (m *Engine) link(l *lua.LState) int {
 	a, err := m.network.GetSource(l.CheckString(1))
 	if err != nil {
-		l.ArgError(1, "expects string")
+		l.ArgError(1, "expects string "+err.Error())
 		return 0
 	}
 	b, err := m.network.GetSink(l.CheckString(2))
 	if err != nil {
-		l.ArgError(2, "expects string")
+		l.ArgError(2, "expects string "+err.Error())
 		return 0
 	}
 
@@ -39,14 +39,14 @@ func (m *Engine) link(l *lua.LState) int {
 func (m *Engine) fanout(l *lua.LState) int {
 	src, err := m.network.GetSource(l.CheckString(1))
 	if err != nil {
-		l.ArgError(1, "expects string")
+		l.ArgError(1, "expects string "+err.Error())
 		return 0
 	}
 	var dests []tributary.Sink
 	for i := 2; i <= l.GetTop(); i++ {
 		dest, err := m.network.GetSink(l.CheckString(i))
 		if err != nil {
-			l.ArgError(i, "expects string")
+			l.ArgError(i, "expects string "+err.Error())
 			return 0
 		}
 		dests = append(dests, dest)
@@ -60,14 +60,14 @@ func (m *Engine) fanout(l *lua.LState) int {
 func (m *Engine) fanin(l *lua.LState) int {
 	dest, err := m.network.GetSink(l.CheckString(1))
 	if err != nil {
-		l.ArgError(1, "expects string")
+		l.ArgError(1, "expects string "+err.Error())
 		return 0
 	}
 	var srcs []tributary.Source
 	for i := 2; i <= l.GetTop(); i++ {
 		src, err := m.network.GetSource(l.CheckString(i))
 		if err != nil {
-			l.ArgError(i, "expects string")
+			l.ArgError(i, "expects string "+err.Error())
 			return 0
 		}
 		srcs = append(srcs, src)
@@ -90,7 +90,7 @@ func (m *Engine) run(l *lua.LState) int {
 	name := l.CheckString(1)
 	err := m.network.RunNode(name)
 	if err != nil {
-		l.ArgError(1, "node not found")
+		l.ArgError(1, "node not found "+err.Error())
 		return 0
 	}
 	l.Push(LuaConvertValue(l, true))
