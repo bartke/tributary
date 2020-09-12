@@ -66,7 +66,16 @@ func (w *Window) Query(query string) injector.Fn {
 		}
 		var out []tributary.Event
 		for i := range records {
-			oi, _ := json.Marshal(records[i])
+			r := map[string]interface{}{}
+			for k, v := range records[i] {
+				b, ok := v.([]byte)
+				if ok {
+					r[k] = string(b)
+				} else {
+					r[k] = v
+				}
+			}
+			oi, _ := json.Marshal(r)
 			out = append(out, w.builder(msg.Context(), oi, nil))
 		}
 		return out
