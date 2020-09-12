@@ -23,7 +23,7 @@ func main() {
 		SkipDefaultTransaction: true,
 		PrepareStmt:            true,
 	}
-	gormDB, err := gormwindow.New(db, gormCfg, standardevent.New,
+	window, err := gormwindow.New(db, gormCfg, standardevent.New,
 		&event.Bet{},
 		&event.Selection{})
 	if err != nil {
@@ -42,7 +42,7 @@ func main() {
 	n.AddNode("printer2", handler.New(out))
 
 	m := module.New(n)
-	m.AddWindowExports(gormDB, &event.Bet{})
+	m.AddWindowExports(window, &event.Bet{})
 	m.AddFilterExport(deduper)
 
 	r := runtime.New()
