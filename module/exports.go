@@ -3,12 +3,12 @@ package module
 import (
 	"time"
 
-	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/pipeline/forwarder"
 	"github.com/bartke/tributary/pipeline/ratelimit"
 	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/sink/handler/discard"
 	"github.com/bartke/tributary/sink/handler/tester"
+	"github.com/bartke/tributary/source/ticker"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -21,6 +21,7 @@ func (m *Engine) initExports() {
 		"link":             m.link,
 		"fanout":           m.fanout,
 		"fanin":            m.fanin,
+		"create_ticker":    m.createTicker,
 		"create_forwarder": m.createForwarder,
 		"create_ratelimit": m.createRatelimiter,
 		"create_discarder": m.createDiscarder,
@@ -29,60 +30,33 @@ func (m *Engine) initExports() {
 }
 
 func (m *Engine) link(l *lua.LState) int {
-	a, err := m.network.GetSource(l.CheckString(1))
-	if err != nil {
-		l.ArgError(1, "expects string "+err.Error())
-		return 0
-	}
-	b, err := m.network.GetSink(l.CheckString(2))
-	if err != nil {
-		l.ArgError(2, "expects string "+err.Error())
-		return 0
-	}
-
-	tributary.Link(a, b)
+	a := l.CheckString(1)
+	b := l.CheckString(2)
+	m.network.Link(a, b)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
 func (m *Engine) fanout(l *lua.LState) int {
-	src, err := m.network.GetSource(l.CheckString(1))
-	if err != nil {
-		l.ArgError(1, "expects string "+err.Error())
-		return 0
-	}
-	var dests []tributary.Sink
+	a := l.CheckString(1)
+	var dests []string
 	for i := 2; i <= l.GetTop(); i++ {
-		dest, err := m.network.GetSink(l.CheckString(i))
-		if err != nil {
-			l.ArgError(i, "expects string "+err.Error())
-			return 0
-		}
-		dests = append(dests, dest)
+		dests = append(dests, l.CheckString(i))
 	}
 
-	tributary.Fanout(src, dests...)
+	m.network.Fanout(a, dests...)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
 
 func (m *Engine) fanin(l *lua.LState) int {
-	dest, err := m.network.GetSink(l.CheckString(1))
-	if err != nil {
-		l.ArgError(1, "expects string "+err.Error())
-		return 0
-	}
-	var srcs []tributary.Source
+	b := l.CheckString(1)
+	var srcs []string
 	for i := 2; i <= l.GetTop(); i++ {
-		src, err := m.network.GetSource(l.CheckString(i))
-		if err != nil {
-			l.ArgError(i, "expects string "+err.Error())
-			return 0
-		}
-		srcs = append(srcs, src)
+		srcs = append(srcs, l.CheckString(i))
 	}
 
-	tributary.Fanin(dest, srcs...)
+	m.network.Fanin(b, srcs...)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
@@ -104,6 +78,15 @@ func (m *Engine) createRatelimiter(l *lua.LState) int {
 		return 0
 	}
 	limiter := ratelimit.New(d)
+	m.network.AddNode(name, limiter)
+	l.Push(LuaConvertValue(l, true))
+	return 1
+}
+
+func (m *Engine) createTicker(l *lua.LState) int {
+	name := l.CheckString(1)
+	ms := l.CheckInt(2)
+	limiter := ticker.New(ms)
 	m.network.AddNode(name, limiter)
 	l.Push(LuaConvertValue(l, true))
 	return 1

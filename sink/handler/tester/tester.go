@@ -15,5 +15,9 @@ func New(indicator string) *tester {
 }
 
 func (t tester) Handler(e tributary.Event) {
-	fmt.Print(t.indicator)
+	if t.indicator == "" {
+		fmt.Println(string(e.Payload()))
+	} else {
+		fmt.Print(t.indicator)
+	}
 }
