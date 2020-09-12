@@ -6,25 +6,31 @@ import (
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/event/standardevent"
-	"github.com/bartke/tributary/example/advanced/event"
+	"github.com/bartke/tributary/example/advanced_multi/event"
 	"github.com/bartke/tributary/filter/gormfilter"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/runtime"
 	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/window/gormwindow"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 func main() {
-	file := sqlite.Open("file:test.db")
-	db, err := gormwindow.New(file, &gorm.Config{}, standardevent.New, &event.Bet{}, &event.Selection{})
+	db := mysql.Open("root:root@tcp(localhost:3306)/tb_test")
+	gormCfg := &gorm.Config{
+		SkipDefaultTransaction: true,
+		PrepareStmt:            true,
+	}
+	gormDB, err := gormwindow.New(db, gormCfg, standardevent.New,
+		&event.Bet{},
+		&event.Selection{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	deduper, err := gormfilter.New(file, &gorm.Config{}, standardevent.New)
+	deduper, err := gormfilter.New(db, gormCfg, standardevent.New)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +42,7 @@ func main() {
 	n.AddNode("printer2", handler.New(out))
 
 	m := module.New(n)
-	m.AddWindowExports(db, &event.Bet{})
+	m.AddWindowExports(gormDB, &event.Bet{})
 	m.AddFilterExport(deduper)
 
 	r := runtime.New()
@@ -45,7 +51,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// add another script, see if it compiles first
+	// add another script, see if it compiles first. Note that this script depends on the first and
+	// can only be loaded after. Otherwise it will error out.
 	bc, err := r.Compile("./network2.lua")
 	if err != nil {
 		log.Fatal(err)

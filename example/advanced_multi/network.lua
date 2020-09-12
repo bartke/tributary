@@ -17,7 +17,7 @@ from
 join selections s on
 	b.uuid = s.bet_uuid
 where
-	datetime(b.create_time / 1000000000, 'unixepoch') >= datetime('now', '-10 seconds')
+	FROM_UNIXTIME(b.create_time / 1000000000) >= now() - interval 10 second
 group by
 	customer_uuid,
 	game_id

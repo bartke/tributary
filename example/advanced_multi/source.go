@@ -8,7 +8,7 @@ import (
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/event/standardevent"
-	"github.com/bartke/tributary/example/advanced/event"
+	"github.com/bartke/tributary/example/advanced_multi/event"
 	"github.com/google/uuid"
 )
 
