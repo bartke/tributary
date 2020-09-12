@@ -7,21 +7,21 @@ import (
 )
 
 func (n *Network) Link(a, b string) error {
-	nodeA, err := n.GetSource(a)
+	nodeA, err := n.getSource(a)
 	if err != nil {
 		return err
 	}
-	nodeB, err := n.GetSink(b)
+	nodeB, err := n.getSink(b)
 	if err != nil {
 		return err
 	}
 	nodeB.In(nodeA.Out())
-	n.AddLink(a, b)
+	n.addEdge(a, b)
 	return nil
 }
 
 func (n *Network) Fanin(b string, an ...string) error {
-	nodeB, err := n.GetSink(b)
+	nodeB, err := n.getSink(b)
 	if err != nil {
 		return err
 	}
@@ -29,12 +29,12 @@ func (n *Network) Fanin(b string, an ...string) error {
 	nodeB.In(out)
 
 	for _, a := range an {
-		node, err := n.GetSource(a)
+		node, err := n.getSource(a)
 		if err != nil {
 			return err
 		}
 		src := node.Out()
-		n.AddLink(a, b)
+		n.addEdge(a, b)
 		go func(ch <-chan tributary.Event) {
 			for e := range ch {
 				out <- e
@@ -46,20 +46,20 @@ func (n *Network) Fanin(b string, an ...string) error {
 
 // Fanout links the source to all outputs
 func (n *Network) Fanout(a string, bn ...string) error {
-	nodeA, err := n.GetSource(a)
+	nodeA, err := n.getSource(a)
 	if err != nil {
 		return err
 	}
 	in := nodeA.Out()
 	out := make([]chan tributary.Event, len(bn))
 	for i, b := range bn {
-		nodeB, err := n.GetSink(b)
+		nodeB, err := n.getSink(b)
 		if err != nil {
 			return err
 		}
 		out[i] = make(chan tributary.Event)
 		nodeB.In(out[i])
-		n.AddLink(a, b)
+		n.addEdge(a, b)
 	}
 	go func() {
 		for e := range in {
@@ -80,7 +80,7 @@ digraph G {
 	footer := `}`
 
 	var nodes string = "\n"
-	for src, dests := range n.links {
+	for src, dests := range n.edges {
 		for _, dest := range dests {
 			nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
 			if _, is := n.sources[src]; is {

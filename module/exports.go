@@ -17,7 +17,6 @@ import (
 func (m *Engine) initExports() {
 	m.exports = map[string]lua.LGFunction{
 		"node_exists":      m.nodeExists,
-		"run":              m.run,
 		"link":             m.link,
 		"fanout":           m.fanout,
 		"fanin":            m.fanin,
@@ -105,17 +104,6 @@ func (m *Engine) createTester(l *lua.LState) int {
 	indicator := l.CheckString(2)
 	sink := handler.New(tester.New(indicator).Handler)
 	m.network.AddNode(name, sink)
-	l.Push(LuaConvertValue(l, true))
-	return 1
-}
-
-func (m *Engine) run(l *lua.LState) int {
-	name := l.CheckString(1)
-	err := m.network.RunNode(name)
-	if err != nil {
-		l.ArgError(1, "node not found "+err.Error())
-		return 0
-	}
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }

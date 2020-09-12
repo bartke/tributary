@@ -2,6 +2,7 @@ package tributary
 
 import (
 	"context"
+	"fmt"
 )
 
 type Event interface {
@@ -29,6 +30,18 @@ type Sink interface {
 type Pipeline interface {
 	Source
 	Sink
+}
+
+type Network interface {
+	AddNode(name string, node Node)
+	GetNode(name string) (Node, bool)
+	NodeExists(name string) bool
+	Run()
+	Edges() map[string][]string
+
+	Link(nodeA string, nodeB string) error
+	Fanin(nodeB string, nodes ...string) error
+	Fanout(nodeA string, nodes ...string) error
 }
 
 func Link(nodeA Source, nodeB Sink) {
@@ -70,4 +83,42 @@ func Fanout(nodeA Source, nodes ...Sink) {
 			}
 		}
 	}()
+}
+
+func Graphviz(n Network) string {
+	header := `
+digraph G {
+	rankdir=LR;
+	node [shape=box, colorscheme=pastel13];
+`
+	footer := `}`
+
+	sources := map[string]struct{}{}
+	for src, _ := range n.Edges() {
+		found := false
+		for _, dests := range n.Edges() {
+			for _, dest := range dests {
+				if dest == src {
+					found = true
+				}
+			}
+		}
+		if !found {
+			sources[src] = struct{}{}
+		}
+	}
+
+	var nodes string = "\n"
+	for src, dests := range n.Edges() {
+		for _, dest := range dests {
+			nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
+			if _, is := sources[src]; is {
+				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=2,style=radial];\n", src)
+			}
+			if _, is := n.Edges()[dest]; !is {
+				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=1,style=radial];\n", dest)
+			}
+		}
+	}
+	return header + nodes + footer
 }

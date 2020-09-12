@@ -15,7 +15,7 @@ type Network struct {
 	pipelines map[string]tributary.Pipeline
 	sinks     map[string]tributary.Sink
 
-	links map[string][]string
+	edges map[string][]string
 }
 
 func New() *Network {
@@ -23,7 +23,7 @@ func New() *Network {
 		sources:   make(map[string]tributary.Source),
 		pipelines: make(map[string]tributary.Pipeline),
 		sinks:     make(map[string]tributary.Sink),
-		links:     make(map[string][]string),
+		edges:     make(map[string][]string),
 	}
 	return n
 }
@@ -41,14 +41,14 @@ func (n *Network) AddNode(name string, node tributary.Node) {
 	}
 }
 
-func (n *Network) AddLink(a, b string) {
-	if _, ok := n.links[a]; !ok {
-		n.links[a] = []string{}
+func (n *Network) addEdge(a, b string) {
+	if _, ok := n.edges[a]; !ok {
+		n.edges[a] = []string{}
 	}
-	n.links[a] = append(n.links[a], b)
+	n.edges[a] = append(n.edges[a], b)
 }
 
-func (n *Network) GetSource(a string) (tributary.Source, error) {
+func (n *Network) getSource(a string) (tributary.Source, error) {
 	source, ok := n.sources[a]
 	if ok {
 		return source, nil
@@ -60,7 +60,7 @@ func (n *Network) GetSource(a string) (tributary.Source, error) {
 	return nil, ErrNodeNotFound
 }
 
-func (n *Network) GetSink(a string) (tributary.Sink, error) {
+func (n *Network) getSink(a string) (tributary.Sink, error) {
 	sink, ok := n.sinks[a]
 	if ok {
 		return sink, nil
@@ -88,15 +88,6 @@ func (n *Network) GetNode(a string) (tributary.Node, bool) {
 	return nil, false
 }
 
-func (n *Network) RunNode(a string) error {
-	node, ok := n.GetNode(a)
-	if ok {
-		go node.Run()
-		return nil
-	}
-	return ErrNodeNotFound
-}
-
 func (n *Network) Run() {
 	for _, node := range n.sinks {
 		go node.Run()
@@ -112,4 +103,8 @@ func (n *Network) Run() {
 func (n *Network) NodeExists(a string) bool {
 	_, ok := n.GetNode(a)
 	return ok
+}
+
+func (n *Network) Edges() map[string][]string {
+	return n.edges
 }
