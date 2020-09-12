@@ -1,6 +1,8 @@
 package gormfilter
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"log"
 	"time"
 
@@ -12,9 +14,8 @@ import (
 )
 
 type Record struct {
-	Id         int       `gorm:"PrimaryKey;autoincrement:true"`
-	Payload    []byte    `gorm:"unique"`
-	CreateTime time.Time `gorm:"DEFAULT:current_timestamp"`
+	Hash       string `gorm:"type:varchar(255);unique"`
+	CreateTime int64
 }
 
 type Filter struct {
@@ -40,7 +41,8 @@ func (f *Filter) Create(name string) (interceptor.Fn, error) {
 		return nil, err
 	}
 	return func(msg tributary.Event) tributary.Event {
-		result := f.db.Table(name).Create(&Record{Payload: msg.Payload()})
+		hash := md5.Sum(msg.Payload())
+		result := f.db.Table(name).Create(&Record{Hash: hex.EncodeToString(hash[:]), CreateTime: time.Now().UnixNano()})
 		if result.Error != nil {
 			return f.builder(msg.Context(), msg.Payload(), result.Error)
 		}
@@ -50,7 +52,7 @@ func (f *Filter) Create(name string) (interceptor.Fn, error) {
 
 func (f *Filter) Clean(name string, s int) handler.Fn {
 	return func(e tributary.Event) {
-		result := f.db.Table(name).Delete(Record{}, "create_time < ?", time.Now().Add(-1*time.Duration(s)*time.Second))
+		result := f.db.Table(name).Delete(Record{}, "create_time < ?", time.Now().Add(-1*time.Duration(s)*time.Second).UnixNano())
 		if result.Error != nil {
 			log.Println(result.Error)
 		}
