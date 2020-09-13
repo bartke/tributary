@@ -1,0 +1,10 @@
+local tb = require('tributary')
+
+tb.create_tester("debug_print", ".")
+tb.create_ticker("ticker_1s", "1s")
+tb.create_ratelimit("filter_10s", "10s")
+tb.create_forwarder("forwarder1")
+tb.create_forwarder("forwarder2")
+tb.link("ticker_1s", "forwarder1")
+tb.fanout("forwarder1", "filter_10s", "forwarder2")
+tb.fanin("debug_print", "filter_10s", "forwarder2")

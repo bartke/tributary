@@ -40,6 +40,8 @@ func main() {
 	n.AddNode("streaming_ingest", NewStream())
 	n.AddNode("printer", handler.New(out))
 	n.AddNode("printer2", handler.New(out))
+	// we can print the sources available
+	fmt.Println(tributary.GraphvizBootstrap(n))
 
 	m := module.New(n)
 	m.AddWindowExports(window, &event.Bet{})
@@ -60,10 +62,15 @@ func main() {
 	if err := r.Execute(bc); err != nil {
 		log.Fatal(err)
 	}
+	err = r.Run("./network3.lua")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer r.Close()
 
 	n.Run()
 	log.Println("running")
+	fmt.Println(tributary.Graphviz(n))
 
 	// blocking wait
 	select {}

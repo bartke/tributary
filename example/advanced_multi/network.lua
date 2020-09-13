@@ -1,5 +1,12 @@
 local tb = require("tributary")
 
+print("functions:")
+for i,v in pairs(tb) do
+    if type(v) == "function" then
+        print(i)
+    end
+end
+
 -- setup network
 -- source --> bets_window --> window_query --> printer
 --                        --> stream_split (script 2)
@@ -42,6 +49,7 @@ tb.link("stream_split2", "limiter")
 tb.link("limiter", "window_query3")
 tb.link("window_query3", "trash")
 
-tb.create_filter("dedupe_liability", 10)
+tb.create_filter("dedupe_liability", "10s")
 tb.link("window_query", "dedupe_liability")
 tb.link("dedupe_liability", "printer")
+
