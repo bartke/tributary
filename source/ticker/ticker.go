@@ -12,9 +12,9 @@ type ticker struct {
 	out    chan tributary.Event
 }
 
-func New(ms int) *ticker {
+func New(d time.Duration) *ticker {
 	return &ticker{
-		ticker: time.NewTicker(time.Duration(ms) * time.Millisecond),
+		ticker: time.NewTicker(d),
 		out:    make(chan tributary.Event),
 	}
 }

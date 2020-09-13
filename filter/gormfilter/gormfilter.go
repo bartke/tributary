@@ -50,9 +50,9 @@ func (f *Filter) Create(name string) (interceptor.Fn, error) {
 	}, nil
 }
 
-func (f *Filter) Clean(name string, s int) handler.Fn {
+func (f *Filter) Clean(name string, interval time.Duration) handler.Fn {
 	return func(e tributary.Event) {
-		result := f.db.Table(name).Delete(Record{}, "create_time < ?", time.Now().Add(-1*time.Duration(s)*time.Second).UnixNano())
+		result := f.db.Table(name).Delete(Record{}, "create_time < ?", time.Now().Add(-1*interval).UnixNano())
 		if result.Error != nil {
 			log.Println(result.Error)
 		}

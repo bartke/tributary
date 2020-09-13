@@ -84,8 +84,13 @@ func (m *Engine) createRatelimiter(l *lua.LState) int {
 
 func (m *Engine) createTicker(l *lua.LState) int {
 	name := l.CheckString(1)
-	ms := l.CheckInt(2)
-	limiter := ticker.New(ms)
+	interval := l.CheckString(2)
+	d, err := time.ParseDuration(interval)
+	if err != nil {
+		l.ArgError(2, err.Error())
+		return 0
+	}
+	limiter := ticker.New(d)
 	m.network.AddNode(name, limiter)
 	l.Push(LuaConvertValue(l, true))
 	return 1

@@ -1,6 +1,8 @@
 package module
 
 import (
+	"time"
+
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/filter"
 	"github.com/bartke/tributary/pipeline/injector"
@@ -55,7 +57,12 @@ func (m *Engine) AddWindowExports(w window.Windower, v interface{}) {
 func (m *Engine) AddFilterExport(f filter.Filter) {
 	createFilter := func(l *lua.LState) int {
 		name := l.CheckString(1)
-		seconds := l.CheckInt(2)
+		interval := l.CheckString(2)
+		d, err := time.ParseDuration(interval)
+		if err != nil {
+			l.ArgError(2, err.Error())
+			return 0
+		}
 		filter, err := f.Create(name)
 		if err != nil {
 			l.ArgError(1, err.Error())
@@ -65,9 +72,9 @@ func (m *Engine) AddFilterExport(f filter.Filter) {
 		ci := interceptor.New(filter)
 		m.network.AddNode(name, ci)
 		// create cleanup routine for filter
-		src := ticker.New(seconds * 1000)
+		src := ticker.New(d)
 		m.network.AddNode(name+"_ticker", src)
-		sink := handler.New(f.Clean(name, seconds))
+		sink := handler.New(f.Clean(name, d))
 		m.network.AddNode(name+"_cleaner", sink)
 		tributary.Link(src, sink)
 		l.Push(LuaConvertValue(l, true))
