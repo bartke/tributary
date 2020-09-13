@@ -33,8 +33,10 @@ func (n *Network) AddNode(name string, node tributary.Node) {
 	pipeline, isPipeline := node.(tributary.Pipeline)
 	sink, isSink := node.(tributary.Sink)
 	if isPipeline {
+		n.edges[name] = []string{}
 		n.pipelines[name] = pipeline
 	} else if isSource {
+		n.edges[name] = []string{}
 		n.sources[name] = source
 	} else if isSink {
 		n.sinks[name] = sink

@@ -3,6 +3,7 @@ package tributary
 import (
 	"context"
 	"fmt"
+	"strconv"
 )
 
 type Event interface {
@@ -85,14 +86,16 @@ func Fanout(nodeA Source, nodes ...Sink) {
 	}()
 }
 
-func Graphviz(n Network) string {
-	header := `
+const (
+	graphvizHeader = `
 digraph G {
 	rankdir=LR;
 	node [shape=box, colorscheme=pastel13];
 `
-	footer := `}`
+	graphvizFooter = `}`
+)
 
+func sourceNodes(n Network) map[string]struct{} {
 	sources := map[string]struct{}{}
 	for src, _ := range n.Edges() {
 		found := false
@@ -107,7 +110,25 @@ digraph G {
 			sources[src] = struct{}{}
 		}
 	}
+	return sources
+}
 
+func GraphvizBootstrap(n Network) string {
+	var nodes string = "\n"
+	sources := sourceNodes(n)
+	var i int
+	for src, _ := range sources {
+		dest := "_" + strconv.Itoa(i)
+		nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
+		nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=2,style=radial];\n", src)
+		nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=1,style=radial,label=_];\n", dest)
+		i++
+	}
+	return graphvizHeader + nodes + graphvizFooter
+}
+
+func Graphviz(n Network) string {
+	sources := sourceNodes(n)
 	var nodes string = "\n"
 	for src, dests := range n.Edges() {
 		for _, dest := range dests {
@@ -120,5 +141,5 @@ digraph G {
 			}
 		}
 	}
-	return header + nodes + footer
+	return graphvizHeader + nodes + graphvizFooter
 }

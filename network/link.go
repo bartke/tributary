@@ -1,8 +1,6 @@
 package network
 
 import (
-	"fmt"
-
 	"github.com/bartke/tributary"
 )
 
@@ -69,27 +67,4 @@ func (n *Network) Fanout(a string, bn ...string) error {
 		}
 	}()
 	return nil
-}
-
-func (n *Network) Graphviz() string {
-	header := `
-digraph G {
-	rankdir=LR;
-	node [shape=box, colorscheme=pastel13];
-`
-	footer := `}`
-
-	var nodes string = "\n"
-	for src, dests := range n.edges {
-		for _, dest := range dests {
-			nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
-			if _, is := n.sources[src]; is {
-				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=2,style=radial];\n", src)
-			}
-			if _, is := n.sinks[dest]; is {
-				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=1,style=radial];\n", dest)
-			}
-		}
-	}
-	return header + nodes + footer
 }
