@@ -1,0 +1,13 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, colorscheme=pastel13];
+
+  ticker_500ms -> forwarder1
+  ticker_500ms [shape=oval,fillcolor=2,style=radial];
+  filter_2s -> tick_printer
+  tick_printer [shape=oval,fillcolor=1,style=radial];
+  forwarder1 -> filter_2s
+  forwarder1 -> forwarder2
+  forwarder2 -> tick_printer
+  tick_printer [shape=oval,fillcolor=1,style=radial];
+}

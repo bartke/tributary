@@ -1,97 +1,89 @@
 ## Tributary
 
-Simple Go event stream processor.
+Simple Go event stream processor. Tributary allows to create networks and define events that
+propagate through connected nodes. Network nodes process events and can engage external
+resources, can decrease or multiply inputs from their in to their out ports. Tributary networks
+are created and managed by a lua based runtime, exposing networking primitives and possible
+custom node manipulators though the `tributary` lua module.
+
 - flow based, isolates concurrently running network nodes
-- network nodes have in and out ports that can be connected
+- network nodes send events through Go channels through their in and out ports
+- networks can be created dynamically with a lua based runtime
 
-Simple Windowing using SQL
-- alert too slack or telegram on query return
+Simple Sliding Windows using SQL
+- includes examples for windowing and query pipelines using Gorm. Working with sqlite/mysql
+  - implement sliding windows with time or limit based query conditions
 - clear window after alert successfully sent from next network node
+- filter outputs to avoid duplicates
 
-Types
+Example use cases
+- pipe aggregate customer actions back onto a message bus based on query criteria
+- alert to slack or telegram
+
+TODOs
 - `[]byte` json/octet-stream payloads
-- Type registry?
-- multi output
-- filter reported, uniqueness
+- filter reported or clear, uniqueness
+- converge window create, query, filter cleanup, add window cleanup
+- direct matcher, filter on attribute list, flat queries on one messages, `map[string]interface{}`. attribute ><>
+- arbitrary event types?
+- network could be created with NATS/Rabbitmq etc
+- network stats
+- telegram/slack/callback sink
+- pubsub/rabbitmq source
 
-TODO: example with one windower DB, multiple networks.
+Client Distributary:
+- manage lua scripts in db
+- build graph, multi instance, pick up each script once, select dependencies on graph
 
-As per [example/scripted](example/scripted/network.lua), we can set up networks at runtime with
-lua scripts, such as
+### Example
+
+![network](./example/scripted/network.svg)
+
+As per [example/scripted](example/scripted/network.lua), we can set up such network at runtime
+with lua scripts, e.g. here
 
 ```lua
-local tb = require("tributary")
+local tb = require('tributary')
 
-tb.link("ticker_1s", "filter_even")
-tb.link("filter_even", "printer")
+tb.create_tester("debug_print", ".")
+tb.create_ticker("ticker_500ms", "500ms")
+tb.create_ratelimit("filter_2s", "2s")
+tb.create_forwarder("forwarder1")
+tb.create_forwarder("forwarder2")
+tb.link("ticker_500ms", "forwarder1")
+tb.fanout("forwarder1", "filter_2s", "forwarder2")
+tb.fanin("debug_print", "filter_2s", "forwarder2")
 ```
 
-If we register the network nodes on the lua module:
+Create a network that module will operate on, load the module into the runtime, then execute the
+above script. The script will link up and control network nodes. When executed without error, run
+the network nodes.
 
 ```go
-import "github.com/bartke/tributary"
+	// create network and register nodes
+	n := network.New()
+	// ... add nodes for sources
+
+	// create the tributary module that operates on the network and register the tributary module
+	// exports with the runtim
+	m := module.New(n)
+	// ... add exports to be available in the runtime
+
+	r := runtime.New()
+	r.LoadModule(m.Loader)
+	// Run will preload the tributary module and execute a script on the VM. We can close it
+	// after we called Run() to stop the execution.
+	if err := r.Run("./network.lua"); err != nil {
+		log.Fatal(err)
+	}
+	defer r.Close()
+
+	// after nodes are linked up and the script is loaded without errors, run the network
+	n.Run()
 ```
+
+We can print the network to a Graphviz output shown above with
 
 ```go
-	m := tributary.New()
-
-	// register sources, pipelines, sinks
-	tickerNode := common.NewTicker()
-	m.RegisterSource("ticker_1s", tickerNode)
-	filterNode := common.NewFilter()
-	m.RegisterPipeline("filter_even", filterNode)
-	printerNode := common.NewPrinter()
-	m.RegisterSink("printer", printerNode)
-```
-
-Event
-- payload flowing through the system
-
-Sources
-- Google PubSub
-- RabbitMQ
-- Ticker
-
-Filter
-- Matcher
-
-Pipeline
-- Matcher
-- Window based
-  - ToSQL
-  - WindowSQL
-  - TriggerSQL
-  - JoinSQL
-
-Sinks:
-- Slack
-- Callback
-- Google PubSub
-- RabbitMQ
-
-```go
-
-// payload: {"key":"test","value":5}
-
-source := pubsub.New()
-pipeline :=
-
-```
-
-```js
-var sportsbet = JSON.parse(`{"selection":"123456/soccer.match_odds/home","sport":"soccer","odds":1.23,"stake":{"value":200,"currency":"USD","exchange_rate":1},"customer":88888888}`)
-sportsbet.stake.value
-```
-
-```sql
-select selection from sports_bets where sport='soccer'
-select sum(stake.value*stake.exchange_rate) from sports_bets.window:time(30s) where sport='soccer' group by customer output when sum > 10000
--- uuid, stake_value, stake_exchange_rate, sport, customer, timestamp
-select avg(odds) from sports_bets.window:length(100) where sport='soccer'
-select sum(odds) from sports_bets.window:length(100) where sport='soccer' output when odds > 100
-select sum(odds) from sports_bets.window:length(100) where sport='soccer' output every 5 minutes
-select sum(odds) from sports_bets.window:length(100) where sport='soccer' output every 5 events
-select customer from sports_bets.window:time(10m) join casino_bets.window:time(10m) on sports_bets.customer = casino_bets.customer output every 1 events
--- sports_bets: uuid, customer, timestamp
--- casino_bets: uuid, customer, timestamp
+fmt.Println(tributary.Graphviz(n)
 ```

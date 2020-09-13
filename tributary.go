@@ -89,8 +89,8 @@ func Fanout(nodeA Source, nodes ...Sink) {
 const (
 	graphvizHeader = `
 digraph G {
-	rankdir=LR;
-	node [shape=box, colorscheme=pastel13];
+  rankdir=LR;
+  node [shape=box, colorscheme=pastel13];
 `
 	graphvizFooter = `}`
 )
@@ -119,9 +119,9 @@ func GraphvizBootstrap(n Network) string {
 	var i int
 	for src, _ := range sources {
 		dest := "_" + strconv.Itoa(i)
-		nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
-		nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=2,style=radial];\n", src)
-		nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=1,style=radial,label=_];\n", dest)
+		nodes += fmt.Sprintf("  %s -> %s\n", src, dest)
+		nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=2,style=radial];\n", src)
+		nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=1,style=radial,label=_];\n", dest)
 		i++
 	}
 	return graphvizHeader + nodes + graphvizFooter
@@ -132,12 +132,12 @@ func Graphviz(n Network) string {
 	var nodes string = "\n"
 	for src, dests := range n.Edges() {
 		for _, dest := range dests {
-			nodes += fmt.Sprintf("        %s -> %s\n", src, dest)
+			nodes += fmt.Sprintf("  %s -> %s\n", src, dest)
 			if _, is := sources[src]; is {
-				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=2,style=radial];\n", src)
+				nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=2,style=radial];\n", src)
 			}
 			if _, is := n.Edges()[dest]; !is {
-				nodes += fmt.Sprintf("        %s [shape=oval,fillcolor=1,style=radial];\n", dest)
+				nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=1,style=radial];\n", dest)
 			}
 		}
 	}

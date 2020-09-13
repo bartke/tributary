@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/bartke/tributary/example/common"
+	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/runtime"
@@ -12,23 +13,25 @@ import (
 func main() {
 	// create network and register nodes
 	n := network.New()
-	n.AddNode("ticker_1s", common.NewTicker())
-	n.AddNode("filter_even", common.NewFilter())
-	n.AddNode("printer", common.NewPrinter())
+	// ... add nodes for sources
 
-	// create the tributary module and register the tributary module exports
+	// create the tributary module that operates on the network and register the tributary module
+	// exports with the runtim
 	m := module.New(n)
+	// ... add exports to be available in the runtime
+
 	r := runtime.New()
 	r.LoadModule(m.Loader)
 	// Run will preload the tributary module and execute a script on the VM. We have to close it
 	// after we called Run().
-	err := r.Run("./network.lua")
-	if err != nil {
+	if err := r.Run("./network.lua"); err != nil {
 		log.Fatal(err)
 	}
 	defer r.Close()
 
+	// after nodes are linked up and the script is loaded without errors, run the network
 	n.Run()
+	fmt.Println(tributary.Graphviz(n))
 	log.Println("running")
 
 	// blocking wait

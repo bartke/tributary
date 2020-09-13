@@ -1,18 +1,10 @@
-local tb = require("tributary")
+local tb = require('tributary')
 
-tb.create_forwarder("fwd1")
-tb.create_forwarder("fwd2")
-
-tb.link("ticker_1s", "fwd1")
-tb.fanout("fwd1", "filter_even", "fwd2")
-tb.fanin("printer", "filter_even", "fwd2")
-
-print("fwd1 exists", tb.node_exists("fwd1"))
-print("fwd2 exists", tb.node_exists("fwd2"))
-print("fwd3 exists", tb.node_exists("fwd3"))
-
-tb.run("ticker_1s")
-tb.run("filter_even")
-tb.run("fwd1")
-tb.run("fwd2")
-tb.run("printer")
+tb.create_tester("tick_printer", ".")
+tb.create_ticker("ticker_500ms", "500ms")
+tb.create_ratelimit("filter_2s", "2s")
+tb.create_forwarder("forwarder1")
+tb.create_forwarder("forwarder2")
+tb.link("ticker_500ms", "forwarder1")
+tb.fanout("forwarder1", "filter_2s", "forwarder2")
+tb.fanin("tick_printer", "filter_2s", "forwarder2")
