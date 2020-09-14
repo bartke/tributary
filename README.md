@@ -10,15 +10,17 @@ for custom node manipulators that can be registered through the `tributary` modu
 - network nodes send events through Go channels through their in and out ports
 - networks can be created dynamically with a lua based runtime
 
-Simple Sliding Windows using SQL
+Possibility of simple **sliding windows** and event aggregate and join queries using SQL Databases
 - includes examples for windowing and query pipelines using Gorm. Working with sqlite/mysql
   - implement sliding windows with time or limit based query conditions
 - clear window after alert successfully sent from next network node
 - filter outputs to avoid duplicates
 
-Example use cases
+Example **use cases**
+- ingest customer actions from distributed systems that communicate event driven over a message bus
 - pipe aggregate customer actions back onto a message bus based on query criteria
-- alert to slack or telegram
+- send alerts to slack/telegram, http callbacks
+- start workflows based on aggregate customer actions
 
 ## Examples
 
@@ -49,17 +51,10 @@ above script. The script will link up and control network nodes. When executed w
 the network nodes.
 
 ```go
-// create network and register nodes
-n := network.New()
-// ... add nodes for sources
-
-// create the tributary module that operates on the network and register the tributary module
-// exports with the runtim
-m := module.New(n)
-// ... add exports to be available in the runtime
-
+n := network.New() // ... add custom nodes
+m := module.New(n) // ... add custom exports to be available in the runtime
 r := runtime.New()
-r.LoadModule(m.Loader)
+r.LoadModule(m.Loader) // register the tributary module with the runtime
 // Run will preload the tributary module and execute a script on the VM. We can close it
 // after we called Run() to stop the execution.
 if err := r.Run("./network.lua"); err != nil {
@@ -77,6 +72,44 @@ We can print the network to a Graphviz output shown above with
 fmt.Println(tributary.Graphviz(n)
 ```
 
+### Custom Nodes and Module Exports
+
+Custom network nodes can be added by either implementing the **Source**, **Pipeline** or **Sink**
+interfaces, or by utilizing provided abstractions for **Injectors**, **Interceptors** and
+**Handlers** function types. A handler example would be a simple print function, e.g. we can
+route messages to a `printer` node that is added as follows
+
+```go
+out := func(e tributary.Event) {
+	fmt.Println(string(e.Payload()))
+}
+n := network.New()
+n.AddNode("printer", handler.New(out))
+```
+
+Equally, we can add additional exports on the tributary lua module:
+
+```go
+myCustomFn := func(l *lua.LState) int {
+	firstStringArg := l.CheckString(1)
+	secondIntegerArg := l.CheckInt(2)
+	// do sth with arg 1 and 2
+	// add return value
+	l.Push(module.LuaConvertValue(l, true))
+	return 1
+}
+m := module.New(n)
+m.Export("my_custom_fn", myCustomFn)
+```
+
+In the networking script we can now call `my_custom_fn` on the required module:
+
+```lua
+local tb = require('tributary')
+tb.my_custom_fn("arg1", 2)
+-- ...
+```
+
 ### Sliding Window CEP
 
 TODO
@@ -90,6 +123,7 @@ TODO
 - arbitrary event types?
 - network could be created with NATS/Rabbitmq etc
 - network stats
+- graceful node shutdown
 - telegram/slack/callback sink
 - pubsub/rabbitmq source
 - client Distributary?
