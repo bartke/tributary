@@ -93,8 +93,8 @@ Equally, we can add additional exports on the tributary lua module:
 myCustomFn := func(l *lua.LState) int {
 	firstStringArg := l.CheckString(1)
 	secondIntegerArg := l.CheckInt(2)
-	// do sth with arg 1 and 2
-	// add return value
+	// ... do sth with string arg 1 and integer arg 2
+	// add boolean return value
 	l.Push(module.LuaConvertValue(l, true))
 	return 1
 }
@@ -112,20 +112,77 @@ tb.my_custom_fn("arg1", 2)
 
 ### Sliding Window CEP
 
-TODO
+Create a windower on top of a mysql database and Gorm. With mysql we can span sliding windows
+with time ranges and limits if desired on an incrementally built dataset.
+
+```go
+db := mysql.Open("root:root@tcp(localhost:3306)/tb")
+gormCfg := &gorm.Config{
+	SkipDefaultTransaction: true,
+	PrepareStmt:            true,
+	NamingStrategy: schema.NamingStrategy{
+		TablePrefix: "example_",
+	},
+}
+window, err := gormwindow.New(db, gormCfg, standardevent.New,
+	&event.Bet{},
+	&event.Selection{})
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+Add lua module exports for the windower with a struct, annotated for gorm tables
+
+```go
+m := module.New(n)
+m.AddWindowExports(window, &event.Bet{})
+```
+
+We can then create and query a window on the runtime and link it up. The following creates a
+window `bets_window` from a streaming ingest of type `event.Bet`, fowards the data stream to
+`window_query` and the output ultimately to a printer.
+
+```lua
+local tb = require("tributary")
+
+tb.create_window("bets_window")
+tb.link("streaming_ingest", "bets_window")
+
+-- (mysql) select aggregate customer liability if > 130
+local query = [[
+select
+	round(sum(stake*exchange_rate*(b.odds -1)), 2) as liability,
+	customer_uuid,
+	game_id
+from
+	bets b
+join selections s on
+	b.uuid = s.bet_uuid
+where
+	FROM_UNIXTIME(b.create_time / 1000000000) >= now() - interval 10 second
+group by
+	customer_uuid,
+	game_id
+having
+	liability > 130
+]]
+tb.query_window("window_query", query)
+tb.link("bets_window", "window_query")
+tb.link("window_query", "printer")
+```
+
+This example can be found under [example/advanced](example/advanced).
 
 ### Todos & Notes
 
-- `[]byte` json/octet-stream payloads
-- filter reported or clear, uniqueness
 - converge window create, query, filter cleanup, add window cleanup
 - direct matcher, filter on attribute list, flat queries on one messages, `map[string]interface{}`. attribute ><>
-- arbitrary event types?
-- network could be created with NATS/Rabbitmq etc
-- network stats
-- graceful node shutdown
+- graceful network node shutdown
+- network with NATS/Rabbitmq etc
+- network stats?
 - telegram/slack/callback sink
 - pubsub/rabbitmq source
-- client Distributary?
-	- manage lua scripts in db
-	- build graph, multi instance, pick up each script once, select dependencies on graph
+- client
+	- manage runtime networks in db
+	- build graph, multi instance, pick up each script once, select dependencies
