@@ -58,6 +58,7 @@ func (w *Window) Query(query string) injector.Fn {
 		records := []map[string]interface{}{}
 		result := w.db.Raw(query).Scan(&records)
 		if result.Error != nil {
+			log.Println("query error", result.Error)
 			return []tributary.Event{w.builder(msg.Context(), msg.Payload(), result.Error)}
 		}
 		if len(records) == 0 && result.RowsAffected == 0 {
