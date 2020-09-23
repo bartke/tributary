@@ -7,8 +7,8 @@ local query = [[
 	customer_uuid,
 	game_id
 from
-	bets b
-join selections s on
+	example_bets b
+join example_selections s on
 	b.uuid = s.bet_uuid
 where
 	stake*exchange_rate >= 100
