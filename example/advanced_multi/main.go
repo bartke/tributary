@@ -15,13 +15,19 @@ import (
 	"github.com/bartke/tributary/window/gormwindow"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 func main() {
 	db := mysql.Open("root:root@tcp(localhost:3306)/tb_test")
 	gormCfg := &gorm.Config{
+		// performance
 		SkipDefaultTransaction: true,
 		PrepareStmt:            true,
+		// isolate multiple instances on the same DB
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "example_",
+		},
 	}
 	window, err := gormwindow.New(db, gormCfg, standardevent.New,
 		&event.Bet{},
@@ -62,11 +68,6 @@ func main() {
 	if err := r.Execute(bc); err != nil {
 		log.Fatal(err)
 	}
-	err = r.Run("./network3.lua")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer r.Close()
 
 	n.Run()
 	log.Println("running")
