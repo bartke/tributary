@@ -68,16 +68,24 @@ func (m *Engine) createForwarder(l *lua.LState) int {
 	return 1
 }
 
+func (m *Engine) addRateLimiter(name, atmost string) error {
+	d, err := time.ParseDuration(atmost)
+	if err != nil {
+		return err
+	}
+	limiter := ratelimit.New(d)
+	m.network.AddNode(name, limiter)
+	return nil
+}
+
 func (m *Engine) createRatelimiter(l *lua.LState) int {
 	name := l.CheckString(1)
 	atmost := l.CheckString(2)
-	d, err := time.ParseDuration(atmost)
+	err := m.addRateLimiter(name, atmost)
 	if err != nil {
 		l.ArgError(2, err.Error())
 		return 0
 	}
-	limiter := ratelimit.New(d)
-	m.network.AddNode(name, limiter)
 	l.Push(LuaConvertValue(l, true))
 	return 1
 }
