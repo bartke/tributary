@@ -34,7 +34,7 @@ type Pipeline interface {
 }
 
 type Network interface {
-	AddNode(name string, node Node)
+	AddNode(name string, node Node) error
 	GetNode(name string) (Node, bool)
 	NodeExists(name string) bool
 	Run()
@@ -98,15 +98,18 @@ digraph G {
 func sourceNodes(n Network) map[string]struct{} {
 	sources := map[string]struct{}{}
 	for src, _ := range n.Edges() {
-		found := false
+		hasDest := false
+		if src == "_" {
+			continue
+		}
 		for _, dests := range n.Edges() {
 			for _, dest := range dests {
 				if dest == src {
-					found = true
+					hasDest = true
 				}
 			}
 		}
-		if !found {
+		if !hasDest {
 			sources[src] = struct{}{}
 		}
 	}
@@ -124,6 +127,19 @@ func GraphvizBootstrap(n Network) string {
 		nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=1,style=radial,label=_];\n", dest)
 		i++
 	}
+	for src, n := range n.Edges() {
+		if src != "_" {
+			continue
+		}
+		for j, dest := range n {
+			src := "_" + strconv.Itoa(i+j)
+			nodes += fmt.Sprintf("  %s -> %s\n", src, dest)
+			nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=2,style=radial,label=_];\n", src)
+			nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=1,style=radial];\n", dest)
+			i++
+		}
+	}
+
 	return graphvizHeader + nodes + graphvizFooter
 }
 

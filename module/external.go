@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/filter"
 	"github.com/bartke/tributary/pipeline/forwarder"
 	"github.com/bartke/tributary/pipeline/injector"
@@ -81,7 +80,7 @@ func (m *Engine) AddWindowExports(w window.Windower, v interface{}) {
 		// cleanup
 		cleanupQuery := fmt.Sprintf(`delete from %s where  %s < %d`, table, timestampField, time.Now().Unix()-int64(d.Seconds()))
 		qc := injector.New(w.Query(cleanupQuery))
-		cleanupPort := name + "_cleanup"
+		cleanupPort := name + "_window_cleanup"
 		m.network.AddNode(cleanupPort, qc)
 		// network ports
 		fwdIn := forwarder.New()
@@ -130,10 +129,12 @@ func (m *Engine) AddFilterExport(f filter.Filter) {
 		m.network.AddNode(name, ci)
 		// create cleanup routine for filter
 		src := ticker.New(d)
-		m.network.AddNode(name+"_ticker", src)
+		tickerPort := name + "_ticker"
+		m.network.AddNode(tickerPort, src)
 		sink := handler.New(f.Clean(name, d))
-		m.network.AddNode(name+"_cleaner", sink)
-		tributary.Link(src, sink)
+		cleanerPort := name + "_cleaner"
+		m.network.AddNode(cleanerPort, sink)
+		m.network.Link(tickerPort, cleanerPort)
 		l.Push(LuaConvertValue(l, true))
 		return 1
 	}
