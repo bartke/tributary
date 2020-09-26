@@ -108,7 +108,7 @@ func (n *Network) GetNode(a string) (tributary.Node, bool) {
 	return nil, false
 }
 
-func (n *Network) Run() {
+func (n *Network) Start() {
 	for _, node := range n.sinks {
 		go node.Run()
 	}
@@ -117,6 +117,18 @@ func (n *Network) Run() {
 	}
 	for _, node := range n.sources {
 		go node.Run()
+	}
+}
+
+func (n *Network) Stop() {
+	for _, node := range n.sources {
+		node.Drain()
+	}
+	for _, node := range n.pipelines {
+		node.Drain()
+	}
+	for _, node := range n.sinks {
+		node.Drain()
 	}
 }
 

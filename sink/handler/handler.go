@@ -7,22 +7,33 @@ import (
 type Fn func(tributary.Event)
 
 type handler struct {
-	in <-chan tributary.Event
-	fn Fn
+	in   <-chan tributary.Event
+	stop chan struct{}
+	fn   Fn
 }
 
 func New(fn Fn) *handler {
 	return &handler{
-		fn: fn,
+		fn:   fn,
+		stop: make(chan struct{}),
 	}
 }
 
-func (h *handler) In(ch <-chan tributary.Event) {
-	h.in = ch
+func (n *handler) In(ch <-chan tributary.Event) {
+	n.in = ch
 }
 
-func (h *handler) Run() {
-	for e := range h.in {
-		h.fn(e)
+func (n *handler) Run() {
+	for {
+		select {
+		case e := <-n.in:
+			n.fn(e)
+		case <-n.stop:
+			return
+		}
 	}
+}
+
+func (n *handler) Drain() {
+	close(n.stop)
 }

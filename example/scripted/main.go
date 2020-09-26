@@ -30,7 +30,7 @@ func main() {
 	defer r.Close()
 
 	// after nodes are linked up and the script is loaded without errors, run the network
-	n.Run()
+	n.Start()
 	fmt.Println(tributary.Graphviz(n))
 	log.Println("running")
 

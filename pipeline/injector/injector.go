@@ -7,15 +7,17 @@ import (
 type Fn func(tributary.Event) []tributary.Event
 
 type injector struct {
-	in  <-chan tributary.Event
-	out chan tributary.Event
-	fn  Fn
+	in   <-chan tributary.Event
+	out  chan tributary.Event
+	stop chan struct{}
+	fn   Fn
 }
 
 func New(fn Fn) *injector {
 	return &injector{
-		out: make(chan tributary.Event),
-		fn:  fn,
+		out:  make(chan tributary.Event),
+		stop: make(chan struct{}),
+		fn:   fn,
 	}
 }
 
@@ -27,13 +29,22 @@ func (i *injector) Out() <-chan tributary.Event {
 	return i.out
 }
 
-func (i *injector) Run() {
-	for e := range i.in {
-		for _, msg := range i.fn(e) {
-			if msg.Error() != nil {
-				continue
+func (n *injector) Run() {
+	for {
+		select {
+		case e := <-n.in:
+			for _, msg := range n.fn(e) {
+				if msg.Error() != nil {
+					continue
+				}
+				n.out <- msg
 			}
-			i.out <- msg
+		case <-n.stop:
+			return
 		}
 	}
+}
+
+func (n *injector) Drain() {
+	close(n.stop)
 }

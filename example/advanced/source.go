@@ -63,24 +63,34 @@ func sampleBet() *event.Bet {
 
 type stream struct {
 	ticker *time.Ticker
+	stop   chan struct{}
 	out    chan tributary.Event
 }
 
 func NewStream() *stream {
 	return &stream{
 		ticker: time.NewTicker(50 * time.Millisecond),
+		stop:   make(chan struct{}),
 		out:    make(chan tributary.Event),
-	}
-}
-
-func (s *stream) Run() {
-	for {
-		<-s.ticker.C
-		m, err := json.Marshal(sampleBet())
-		s.out <- standardevent.New(context.Background(), m, err)
 	}
 }
 
 func (s *stream) Out() <-chan tributary.Event {
 	return s.out
+}
+
+func (n *stream) Run() {
+	for {
+		select {
+		case <-n.ticker.C:
+			m, err := json.Marshal(sampleBet())
+			n.out <- standardevent.New(context.Background(), m, err)
+		case <-n.stop:
+			return
+		}
+	}
+}
+
+func (n *stream) Drain() {
+	close(n.stop)
 }

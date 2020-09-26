@@ -8,6 +8,7 @@ manipulators to be exposed through the `tributary` module.
 
 - flow based, isolates concurrently running network nodes
 - network nodes send events through Go channels through their in and out ports
+  - default network channels are unbuffered
 - networks can be created dynamically at run-time with a lua based vm
 
 Possibility of simple **sliding windows** and event aggregate and join queries using external SQL Databases
@@ -226,7 +227,6 @@ cd examples/advanced && make
 
 ## Todos & Notes
 
-- graceful network node shutdown
 - network with NATS/Rabbitmq etc
 - network stats?
 - telegram/slack/callback sink

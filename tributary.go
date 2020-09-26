@@ -14,6 +14,7 @@ type EventConstructor func(ctx context.Context, msg []byte, err error) Event
 
 type Node interface {
 	Run()
+	Drain()
 }
 
 type Source interface {
@@ -37,8 +38,10 @@ type Network interface {
 	NodeExists(name string) bool
 	NodeUnconnected(name string) bool
 	IsConnected() bool
-	Run()
 	Edges() map[string][]string
+
+	Start()
+	Stop()
 
 	Link(nodeA string, nodeB string) error
 	Fanin(nodeB string, nodes ...string) error

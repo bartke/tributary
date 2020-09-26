@@ -11,30 +11,42 @@ type limiter struct {
 	out    chan tributary.Event
 	last   time.Time
 	atmost time.Duration
+
+	stop chan struct{}
 }
 
 func New(atmost time.Duration) *limiter {
 	return &limiter{
 		out:    make(chan tributary.Event),
+		stop:   make(chan struct{}),
 		last:   time.Time{},
 		atmost: atmost,
 	}
 }
 
-func (l *limiter) In(ch <-chan tributary.Event) {
-	l.in = ch
+func (n *limiter) In(ch <-chan tributary.Event) {
+	n.in = ch
 }
 
-func (l *limiter) Out() <-chan tributary.Event {
-	return l.out
+func (n *limiter) Out() <-chan tributary.Event {
+	return n.out
 }
 
-func (l *limiter) Run() {
-	for e := range l.in {
-		if time.Since(l.last) < l.atmost {
-			continue
+func (n *limiter) Run() {
+	for {
+		select {
+		case e := <-n.in:
+			if time.Since(n.last) < n.atmost {
+				continue
+			}
+			n.out <- e
+			n.last = time.Now()
+		case <-n.stop:
+			return
 		}
-		l.out <- e
-		l.last = time.Now()
 	}
+}
+
+func (n *limiter) Drain() {
+	close(n.stop)
 }

@@ -10,21 +10,32 @@ import (
 type ticker struct {
 	ticker *time.Ticker
 	out    chan tributary.Event
+
+	stop chan struct{}
 }
 
 func New(d time.Duration) *ticker {
 	return &ticker{
 		ticker: time.NewTicker(d),
+		stop:   make(chan struct{}),
 		out:    make(chan tributary.Event),
 	}
 }
 
-func (t *ticker) Run() {
+func (n *ticker) Out() <-chan tributary.Event {
+	return n.out
+}
+
+func (n *ticker) Run() {
 	for {
-		t.out <- timeevent.New(<-t.ticker.C)
+		select {
+		case n.out <- timeevent.New(<-n.ticker.C):
+		case <-n.stop:
+			return
+		}
 	}
 }
 
-func (t *ticker) Out() <-chan tributary.Event {
-	return t.out
+func (n *ticker) Drain() {
+	close(n.stop)
 }

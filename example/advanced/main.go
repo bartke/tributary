@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/event/standardevent"
@@ -78,8 +79,12 @@ func main() {
 	fmt.Println("connected:")
 	fmt.Println(tributary.Graphviz(n))
 
-	n.Run()
+	n.Start()
 	log.Println("running")
+	<-time.After(20 * time.Second)
+	log.Println("stopping")
+	n.Stop()
+	log.Println("stopped.")
 
 	// blocking wait
 	select {}
