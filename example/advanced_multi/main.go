@@ -44,8 +44,8 @@ func main() {
 	// create network and register nodes
 	n := network.New()
 	n.AddNode("streaming_ingest", NewStream())
-	n.AddNode("printer", handler.New(out))
-	n.AddNode("printer2", handler.New(out))
+	n.AddNode("liability_printer", handler.New(out))
+	n.AddNode("stake_printer", handler.New(out))
 	// we can print the sources available
 	fmt.Println(tributary.GraphvizBootstrap(n))
 

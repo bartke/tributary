@@ -110,6 +110,40 @@ tb.my_custom_fn("arg1", 2)
 -- ...
 ```
 
+### Available module functions
+
+The following lua script prints all available functions, exported from the `tributary` module.
+
+```lua
+local tb = require("tributary")
+
+print("functions:")
+for i,v in pairs(tb) do
+    if type(v) == "function" then
+        print(i)
+    end
+end
+```
+
+The output is
+
+```
+functions:
+sliding_window_time
+create_filter
+node_exists
+fanin
+create_ratelimit
+create_tester
+create_window
+query_window
+link
+fanout
+create_ticker
+create_forwarder
+create_discarder
+```
+
 ### Sliding Window CEP
 
 Create a windower on top of a mysql database and Gorm. With mysql we can span sliding windows
@@ -176,6 +210,7 @@ This example can be found under [example/advanced](example/advanced).
 
 ### Todos & Notes
 
+- error if _ node is added
 - converge window create, query, filter cleanup, add window cleanup
 - direct matcher, filter on attribute list, flat queries on one messages, `map[string]interface{}`. attribute ><>
 - graceful network node shutdown

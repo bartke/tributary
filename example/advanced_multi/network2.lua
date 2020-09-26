@@ -22,4 +22,5 @@ tb.link("stream_split", "window_query2")
 
 tb.create_filter("dedupe_stake", "10s")
 tb.link("window_query2", "dedupe_stake")
-tb.link("dedupe_stake", "printer2")
+tb.link("dedupe_stake", "stake_printer")
+

@@ -1,13 +1,5 @@
 local tb = require("tributary")
 
-print("functions:")
-for i,v in pairs(tb) do
-    if type(v) == "function" then
-        print(i)
-    end
-end
-
--- setup network
 -- select aggregate customer liability if > 130
 local query = [[
 select
@@ -33,6 +25,7 @@ tb.create_forwarder("stream_split")
 tb.fanout("streaming_ingest", "customer_liability", "stream_split")
 
 tb.create_filter("dedupe_liability", "10s")
-tb.link("window_out", "dedupe_liability")
-tb.link("dedupe_liability", "printer")
 
+-- setup network
+tb.link("window_out", "dedupe_liability")
+tb.link("dedupe_liability", "liability_printer")
