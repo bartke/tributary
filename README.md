@@ -142,11 +142,11 @@ create_forwarder
 create_discarder
 ```
 
-### Sliding Window CEP
+### Sliding Window
 
 ![network](./example/advanced/network.svg)
 
-Create a windower on top of a mysql database and Gorm. With mysql we can span sliding windows
+Create a windower on top of a mysql database with Gorm. With mysql we can span sliding windows
 with time ranges and limits if desired on an incrementally built dataset.
 
 ```go
@@ -176,7 +176,8 @@ m.AddWindowExports(window, &event.Bet{})
 We can then create and query a window on the runtime and link it up. The following creates a time
 based sliding window `customer_liability` from a streaming ingest of type `event.Bet`, that joins
 to `[]event.Selection`, fowards the queried data stream to `window_out` and the output ultimately
-to a printer.
+to a printer. This is reminiscent of complex event processing (CEP), however will not be viable
+for high frequency messages.
 
 ```lua
 local tb = require("tributary")
