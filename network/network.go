@@ -2,12 +2,14 @@ package network
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/bartke/tributary"
 )
 
 var (
-	ErrNodeNotFound = errors.New("node doesn't exist")
+	ErrNodeNotFound    = errors.New("node doesn't exist")
+	ErrUnknownNodeType = errors.New("node type not recognized")
 )
 
 type Network struct {
@@ -28,24 +30,36 @@ func New() *Network {
 	return n
 }
 
-func (n *Network) AddNode(name string, node tributary.Node) {
+func (n *Network) AddNode(name string, node tributary.Node) error {
 	source, isSource := node.(tributary.Source)
 	pipeline, isPipeline := node.(tributary.Pipeline)
 	sink, isSink := node.(tributary.Sink)
 	if isPipeline {
 		n.edges[name] = []string{}
 		n.pipelines[name] = pipeline
+		return nil
 	} else if isSource {
 		n.edges[name] = []string{}
 		n.sources[name] = source
+		return nil
 	} else if isSink {
+		n.edges["_"] = append(n.edges["_"], name)
 		n.sinks[name] = sink
+		return nil
 	}
+	return ErrUnknownNodeType
 }
 
 func (n *Network) addEdge(a, b string) {
 	if _, ok := n.edges[a]; !ok {
 		n.edges[a] = []string{}
+	}
+	for i, e := range n.edges["_"] {
+		if e == b {
+			fmt.Println("rm", b)
+			n.edges["_"] = append(n.edges["_"][:i], n.edges["_"][i+1:]...)
+			break
+		}
 	}
 	n.edges[a] = append(n.edges[a], b)
 }
