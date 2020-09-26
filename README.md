@@ -1,30 +1,27 @@
 # Tributary
 
-Simple **event stream processor** written in Go and Lua. Tributary allows to create networks and
-define events that propagate through connected nodes. Network nodes process events and can engage
-external resources, can decrease or multiply inputs from their in to their out ports. Tributary
-networks are created and managed by a lua runtime that exposes networking primitives and allows
-for custom node manipulators that can be registered through the `tributary` module.
+Attempts of a simple **event stream processor** using Go and Lua. Tributary allows to create
+networks and define events that propagate through connected nodes. Network nodes process events
+and can engage external resources, can decrease or multiply inputs from their in to their out
+ports. Tributary networks are created and linked up by a lua runtime that allows custom node
+manipulators to be exposed through the `tributary` module.
 
 - flow based, isolates concurrently running network nodes
 - network nodes send events through Go channels through their in and out ports
-- networks can be created dynamically with a lua based runtime
+- networks can be created dynamically at run-time with a lua based vm
 
-Possibility of simple **sliding windows** and event aggregate and join queries using SQL Databases
-- includes examples for windowing and query pipelines using Gorm. Working with sqlite/mysql
-  - implement sliding windows with time or limit based query conditions
-- clear window after alert successfully sent from next network node
-- filter outputs to avoid duplicates
+Possibility of simple **sliding windows** and event aggregate and join queries using external SQL Databases
+- examples for windowing and query pipelines using Gorm. Tested with sqlite/mysql
+  - sliding windows with time or count based query conditions
+- rate limit or filter outputs for duplicates
 
 Example **use cases**
 - ingest customer actions from distributed systems that communicate event driven over a message bus
 - pipe aggregate customer actions back onto a message bus based on query criteria
 - send alerts to slack/telegram, http callbacks
-- start workflows based on aggregate customer actions
+- start workflows based on aggregated customer actions
 
-## Examples
-
-### Concepts
+## Concepts
 
 ![network](./example/scripted/network.svg)
 
@@ -227,10 +224,8 @@ This example can be found under [example/advanced](example/advanced), and run wi
 cd examples/advanced && make
 ```
 
-### Todos & Notes
+## Todos & Notes
 
-- converge window create, query, filter cleanup, add window cleanup
-- direct matcher, filter on attribute list, flat queries on one messages, `map[string]interface{}`. attribute ><>
 - graceful network node shutdown
 - network with NATS/Rabbitmq etc
 - network stats?
