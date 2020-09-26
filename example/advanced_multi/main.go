@@ -47,7 +47,8 @@ func main() {
 	n.AddNode("liability_printer", handler.New(out))
 	n.AddNode("stake_printer", handler.New(out))
 	// we can print the sources available
-	fmt.Println(tributary.GraphvizBootstrap(n))
+	fmt.Println("unconnected:")
+	fmt.Println(tributary.Graphviz(n))
 
 	m := module.New(n)
 	m.AddWindowExports(window, &event.Bet{})
@@ -69,9 +70,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fmt.Println("connected:")
+	fmt.Println(tributary.Graphviz(n))
+
 	n.Run()
 	log.Println("running")
-	fmt.Println(tributary.Graphviz(n))
 
 	// blocking wait
 	select {}

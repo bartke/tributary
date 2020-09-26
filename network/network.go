@@ -129,12 +129,20 @@ func (n *Network) NodeUnconnected(a string) bool {
 	if a == unconnected {
 		return true
 	}
-	for _, node := range n.edges["unconnected"] {
+	for _, node := range n.edges[unconnected] {
 		if a == node {
 			return true
 		}
 	}
 	return false
+}
+
+func (n *Network) IsConnected() bool {
+	// TODO: add more connectivity checks
+	if len(n.edges[unconnected]) > 0 {
+		return false
+	}
+	return true
 }
 
 func (n *Network) Edges() map[string][]string {

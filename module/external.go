@@ -78,7 +78,7 @@ func (m *Engine) AddWindowExports(w window.Windower, v interface{}) {
 		queryPort := name + "_query"
 		m.network.AddNode(queryPort, qi)
 		// cleanup
-		cleanupQuery := fmt.Sprintf(`delete from %s where  %s < %d`, table, timestampField, time.Now().Unix()-int64(d.Seconds()))
+		cleanupQuery := fmt.Sprintf(`delete from %s where %s < %d`, table, timestampField, time.Now().Unix()-int64(d.Seconds()))
 		qc := injector.New(w.Query(cleanupQuery))
 		cleanupPort := name + "_window_cleanup"
 		m.network.AddNode(cleanupPort, qc)
