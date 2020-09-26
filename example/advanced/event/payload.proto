@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package event;
-option go_package = "github.com/bartke/tributary/example/advanced/event";
+option go_package = "github.com/bartke/tributary/example/advanced_multi/event";
 
 message Bet {
   string uuid = 1;

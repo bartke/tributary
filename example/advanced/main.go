@@ -7,20 +7,36 @@ import (
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/event/standardevent"
 	"github.com/bartke/tributary/example/advanced/event"
+	"github.com/bartke/tributary/filter/gormfilter"
 	"github.com/bartke/tributary/module"
 	"github.com/bartke/tributary/network"
 	"github.com/bartke/tributary/runtime"
 	"github.com/bartke/tributary/sink/handler"
 	"github.com/bartke/tributary/window/gormwindow"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 func main() {
-	inmemory := sqlite.Open("file::memory:?cache=shared")
-	db, err := gormwindow.New(inmemory, &gorm.Config{}, standardevent.New,
+	db := mysql.Open("root:root@tcp(localhost:3306)/tb_test")
+	gormCfg := &gorm.Config{
+		// performance
+		SkipDefaultTransaction: true,
+		PrepareStmt:            true,
+		// isolate multiple instances on the same DB
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "example_",
+		},
+	}
+	window, err := gormwindow.New(db, gormCfg, standardevent.New,
 		&event.Bet{},
 		&event.Selection{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	deduper, err := gormfilter.New(db, gormCfg, standardevent.New)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,11 +44,15 @@ func main() {
 	// create network and register nodes
 	n := network.New()
 	n.AddNode("streaming_ingest", NewStream())
-	n.AddNode("printer", handler.New(out))
+	n.AddNode("liability_printer", handler.New(out))
+	n.AddNode("stake_printer", handler.New(out))
+	// we can print the sources available
+	fmt.Println("unconnected:")
+	fmt.Println(tributary.Graphviz(n))
 
 	m := module.New(n)
-	m.Export("create_window", createWindow(n, db))
-	m.Export("query_window", queryWindow(n, db))
+	m.AddWindowExports(window, &event.Bet{})
+	m.AddFilterExport(deduper)
 
 	r := runtime.New()
 	r.LoadModule(m.Loader)
@@ -40,7 +60,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer r.Close()
+	// add another script, see if it compiles first. Note that this script depends on the first and
+	// can only be loaded after. Otherwise it will error out.
+	bc, err := r.Compile("./network2.lua")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := r.Execute(bc); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("connected:")
+	fmt.Println(tributary.Graphviz(n))
 
 	n.Run()
 	log.Println("running")

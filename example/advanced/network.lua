@@ -1,33 +1,31 @@
 local tb = require("tributary")
 
--- setup network
--- source --> bets_window --> window_query --> printer
-tb.create_window("bets_window")
-tb.link("streaming_ingest", "bets_window")
--- sqlite query
+-- select aggregate customer liability if > 130
 local query = [[
-    select
+select
 	round(sum(stake*exchange_rate*(b.odds -1)), 2) as liability,
 	customer_uuid,
 	game_id
 from
-	bets b
-join selections s on
+	example_bets b
+join example_selections s on
 	b.uuid = s.bet_uuid
 where
-	datetime(b.create_time / 1000000000, 'unixepoch') >= datetime('now', '-1 minute')
+	FROM_UNIXTIME(b.create_time) >= now() - interval 10 second
 group by
 	customer_uuid,
 	game_id
 having
-	liability > 100
+	liability > 130
 ]]
-tb.query_window("window_query", query)
-tb.link("bets_window", "window_query")
-tb.link("window_query", "printer")
+tb.sliding_window_time("customer_liability", "window_out", query, "example_bets", "10s", "create_time")
 
--- run all network ndoes
-tb.run("streaming_ingest")
-tb.run("bets_window")
-tb.run("window_query")
-tb.run("printer")
+-- here we create a stream split to reutilize what was set up before
+tb.create_forwarder("stream_split")
+tb.fanout("streaming_ingest", "customer_liability", "stream_split")
+
+tb.create_filter("dedupe_liability", "10s")
+
+-- setup network
+tb.link("window_out", "dedupe_liability")
+tb.link("dedupe_liability", "liability_printer")
