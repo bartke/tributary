@@ -1,8 +1,8 @@
 
 default: run
 
-run: *.go
-	go run  *.go
+run:
+	docker-compose up
 
 proto:
 	protoc -I$(GOPATH)/src --proto_path=. --go_out=${GOPATH}/src ./event/payload.proto

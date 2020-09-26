@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bartke/tributary"
 	"github.com/bartke/tributary/event/standardevent"
@@ -19,7 +20,11 @@ import (
 )
 
 func main() {
-	db := mysql.Open("root:root@tcp(localhost:3306)/tb_test")
+	mysqlHost := "localhost"
+	if len(os.Args) > 1 {
+		mysqlHost = os.Args[1]
+	}
+	db := mysql.Open(fmt.Sprintf("root:root@tcp(%s:3306)/tb_test", mysqlHost))
 	gormCfg := &gorm.Config{
 		// performance
 		SkipDefaultTransaction: true,
