@@ -10,10 +10,10 @@ import (
 
 func compileLua(filePath string) (*lua.FunctionProto, error) {
 	file, err := os.Open(filePath)
-	defer file.Close()
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	reader := bufio.NewReader(file)
 	chunk, err := parse.Parse(reader, filePath)
 	if err != nil {

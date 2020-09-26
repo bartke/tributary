@@ -21,12 +21,12 @@ func New(fn Fn) *injector {
 	}
 }
 
-func (i *injector) In(ch <-chan tributary.Event) {
-	i.in = ch
+func (n *injector) In(ch <-chan tributary.Event) {
+	n.in = ch
 }
 
-func (i *injector) Out() <-chan tributary.Event {
-	return i.out
+func (n *injector) Out() <-chan tributary.Event {
+	return n.out
 }
 
 func (n *injector) Run() {

@@ -15,7 +15,7 @@ const (
 
 func sourceNodes(n Network) map[string]struct{} {
 	sources := map[string]struct{}{}
-	for src, _ := range n.Edges() {
+	for src := range n.Edges() {
 		hasDest := false
 		if n.NodeUnconnected(src) {
 			continue
@@ -38,7 +38,7 @@ func drawGraphvizBootstrap(n Network) string {
 	var nodes string = "\n"
 	sources := sourceNodes(n)
 	var i int
-	for src, _ := range sources {
+	for src := range sources {
 		dest := "_" + strconv.Itoa(i)
 		nodes += fmt.Sprintf("  %s -> %s\n", src, dest)
 		nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=2,style=radial];\n", src)
