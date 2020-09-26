@@ -1,0 +1,22 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, colorscheme=pastel13];
+
+  dedupe_liability -> liability_printer
+  liability_printer [shape=oval,fillcolor=1,style=radial];
+  dedupe_liability_ticker -> dedupe_liability_cleaner
+  dedupe_liability_ticker [shape=oval,fillcolor=2,style=radial];
+  dedupe_liability_cleaner [shape=oval,fillcolor=1,style=radial];
+  window_out -> dedupe_liability
+  customer_liability_create -> customer_liability_query
+  customer_liability_window_cleanup -> customer_liability_null
+  customer_liability_null [shape=oval,fillcolor=1,style=radial];
+  customer_liability -> customer_liability_splitter
+  customer_liability -> customer_liability_create
+  customer_liability_query -> window_out
+  streaming_ingest -> customer_liability
+  streaming_ingest [shape=oval,fillcolor=2,style=radial];
+  streaming_ingest [shape=oval,fillcolor=2,style=radial];
+  customer_liability_rate_limit_10s -> customer_liability_window_cleanup
+  customer_liability_splitter -> customer_liability_rate_limit_10s
+}

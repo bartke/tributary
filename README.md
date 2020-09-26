@@ -146,6 +146,8 @@ create_discarder
 
 ### Sliding Window CEP
 
+![network](./example/advanced/network.svg)
+
 Create a windower on top of a mysql database and Gorm. With mysql we can span sliding windows
 with time ranges and limits if desired on an incrementally built dataset.
 
@@ -173,40 +175,57 @@ m := module.New(n)
 m.AddWindowExports(window, &event.Bet{})
 ```
 
-We can then create and query a window on the runtime and link it up. The following creates a
-window `bets_window` from a streaming ingest of type `event.Bet`, fowards the data stream to
-`window_query` and the output ultimately to a printer.
+We can then create and query a window on the runtime and link it up. The following creates a time
+based sliding window `customer_liability` from a streaming ingest of type `event.Bet`, that joins
+to `[]event.Selection`, fowards the queried data stream to `window_out` and the output ultimately
+to a printer.
 
 ```lua
 local tb = require("tributary")
 
-tb.create_window("bets_window")
-tb.link("streaming_ingest", "bets_window")
-
--- (mysql) select aggregate customer liability if > 130
+-- select aggregate customer liability if > 130
 local query = [[
 select
 	round(sum(stake*exchange_rate*(b.odds -1)), 2) as liability,
 	customer_uuid,
 	game_id
 from
-	bets b
-join selections s on
+	example_bets b
+join example_selections s on
 	b.uuid = s.bet_uuid
 where
-	FROM_UNIXTIME(b.create_time / 1000000000) >= now() - interval 10 second
+	FROM_UNIXTIME(b.create_time) >= now() - interval 10 second
 group by
 	customer_uuid,
 	game_id
 having
 	liability > 130
 ]]
-tb.query_window("window_query", query)
-tb.link("bets_window", "window_query")
-tb.link("window_query", "printer")
+-- input port, output port, query, table for cleanup, time too cleanup, unix timestamp in table
+tb.sliding_window_time("customer_liability", "window_out", query, "example_bets", "10s", "create_time")
+
+tb.create_filter("dedupe_liability", "10s")
+
+-- setup network
+tb.link("streaming_ingest", "customer_liability")
+tb.link("window_out", "dedupe_liability")
+tb.link("dedupe_liability", "liability_printer")
 ```
 
-This example can be found under [example/advanced](example/advanced).
+This will produce an output like
+
+```plain
+{"customer_uuid":"76d17c9e-734b-452c-a5ee-852d1e6261bd","game_id":123456,"liability":"138.00"}
+{"customer_uuid":"76d17c9e-734b-452c-a5ee-852d1e6261bd","game_id":123456,"liability":"161.00"}
+{"customer_uuid":"76d17c9e-734b-452c-a5ee-852d1e6261bd","game_id":654321,"stake":"100.00"}
+...
+```
+
+This example can be found under [example/advanced](example/advanced), and run with
+
+```
+cd examples/advanced && make
+```
 
 ### Todos & Notes
 
