@@ -2,15 +2,17 @@ package network
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/bartke/tributary"
 )
 
 var (
-	ErrNodeNotFound    = errors.New("node doesn't exist")
-	ErrUnknownNodeType = errors.New("node type not recognized")
+	ErrNodeNotFound     = errors.New("node doesn't exist")
+	ErrUnknownNodeType  = errors.New("node type not recognized")
+	ErrReservedNodeName = errors.New("node name is reserved")
 )
+
+const unconnected = "_"
 
 type Network struct {
 	sources   map[string]tributary.Source
@@ -31,6 +33,9 @@ func New() *Network {
 }
 
 func (n *Network) AddNode(name string, node tributary.Node) error {
+	if name == unconnected {
+		return ErrReservedNodeName
+	}
 	source, isSource := node.(tributary.Source)
 	pipeline, isPipeline := node.(tributary.Pipeline)
 	sink, isSink := node.(tributary.Sink)
@@ -56,7 +61,6 @@ func (n *Network) addEdge(a, b string) {
 	}
 	for i, e := range n.edges["_"] {
 		if e == b {
-			fmt.Println("rm", b)
 			n.edges["_"] = append(n.edges["_"][:i], n.edges["_"][i+1:]...)
 			break
 		}
@@ -119,6 +123,18 @@ func (n *Network) Run() {
 func (n *Network) NodeExists(a string) bool {
 	_, ok := n.GetNode(a)
 	return ok
+}
+
+func (n *Network) NodeUnconnected(a string) bool {
+	if a == unconnected {
+		return true
+	}
+	for _, node := range n.edges["unconnected"] {
+		if a == node {
+			return true
+		}
+	}
+	return false
 }
 
 func (n *Network) Edges() map[string][]string {

@@ -210,7 +210,6 @@ This example can be found under [example/advanced](example/advanced).
 
 ### Todos & Notes
 
-- error if _ node is added
 - converge window create, query, filter cleanup, add window cleanup
 - direct matcher, filter on attribute list, flat queries on one messages, `map[string]interface{}`. attribute ><>
 - graceful network node shutdown

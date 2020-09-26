@@ -37,6 +37,7 @@ type Network interface {
 	AddNode(name string, node Node) error
 	GetNode(name string) (Node, bool)
 	NodeExists(name string) bool
+	NodeUnconnected(name string) bool
 	Run()
 	Edges() map[string][]string
 
@@ -99,7 +100,7 @@ func sourceNodes(n Network) map[string]struct{} {
 	sources := map[string]struct{}{}
 	for src, _ := range n.Edges() {
 		hasDest := false
-		if src == "_" {
+		if n.NodeUnconnected(src) {
 			continue
 		}
 		for _, dests := range n.Edges() {
@@ -127,11 +128,11 @@ func GraphvizBootstrap(n Network) string {
 		nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=1,style=radial,label=_];\n", dest)
 		i++
 	}
-	for src, n := range n.Edges() {
-		if src != "_" {
+	for src, dests := range n.Edges() {
+		if !n.NodeUnconnected(src) {
 			continue
 		}
-		for j, dest := range n {
+		for j, dest := range dests {
 			src := "_" + strconv.Itoa(i+j)
 			nodes += fmt.Sprintf("  %s -> %s\n", src, dest)
 			nodes += fmt.Sprintf("  %s [shape=oval,fillcolor=2,style=radial,label=_];\n", src)
